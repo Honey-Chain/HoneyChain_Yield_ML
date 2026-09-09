@@ -1,0 +1,15 @@
+{
+  "FEATURES": [
+    "weight", "weight_change_1d",
+    "gain_rate_3d", "gain_rate_7d", "gain_rate_14d",
+    "weight_std_3d", "weight_std_7d", "weight_std_14d",
+    "gain_accel", "weight_vs_14d",
+    "flow", "flow_roll_3d", "flow_roll_7d", "flow_abs_7d",
+    "temperature", "temp_roll_7d", "temp_roll_14d",
+    "humidity", "humid_roll_7d",
+    "doy_sin", "doy_cos",
+    "days_into_flow"
+  ],
+  "minimum_history_days": 14,
+  "notes": "Backend MUST strictly enforce the 14-day minimum history. The model's internal NaN check is known to be unreliable and will incorrectly pass as few as 4 days."
+}
