@@ -259,16 +259,40 @@ python test_model.py
 
 ---
 
-## 6. Testing Frontend
+## 6. Testing Frontend & Biological Scenarios
 
 The service includes a built-in validation dashboard at `/`:
-- **Scenario Presets**: One-click quick loading of real biological scenarios:
-  1. *Early Strong Nectar Flow* (Day 14, rapid ~1.5 kg/day gain).
-  2. *Plateauing Flow* (Day 34, dying flow, triggering imminent harvest).
-  3. *Severe Cold Start* (<6 days telemetry, verifies graceful rejection).
-  4. *Negative Gain / Store Consumption* (Drop at end of flow).
-- **Interactive Forms**: Modify `hiveId`, `days_into_flow`, error margins, and telemetry records.
-- **Visual Feedback**: Real-time loading spinners, error alerts, and harvest window metric highlights.
+
+### Multi-Theme Visual Modes
+Switch between four tailored UI themes with automatic `localStorage` persistence:
+- 🍯 **Honey Amber**: Classic golden apiary palette (default).
+- 🌙 **Dark Apiary**: Sleek low-glare slate and dark mode for apiary field checks.
+- 🌿 **Forest Green**: Organic emerald palette matching natural flora and forage.
+- ⚡ **Cyber Apiary**: Modern tech blue/cyan dashboard layout.
+
+### 10 Biological & Environmental Presets
+Presets are categorized into three operational groups:
+
+#### 🌸 Flow Phases
+1. **Early Strong Nectar Flow (Surge)**: Day 14 into flow, 15 days history gaining ~1.5 kg/day. Verifies long harvest window remaining.
+2. **Peak Mid-Season Flow (Sustained)**: Day 24 into flow, 25 days history, high continuous foraging activity (320 count/day).
+3. **Plateauing Flow (Dying Flow)**: Day 34 into flow, 35 days history gaining <0.08 kg/day. Triggers imminent harvest recommendation (0–5 days).
+
+#### 🌦️ Climate & Stress Conditions
+4. **Extreme Heatwave & Drought**: High ambient heat (40°C) with 15% humidity. Verifies shortened flow duration from floral drying.
+5. **Monsoon / Continuous Rain Confinement**: 92% humidity with cold temperatures (17°C). Tests flow stall during weather confinement.
+6. **Autumn Late-Season Bloom**: Late September/October flow testing trigonometric day-of-year cyclical encoding (`doy_sin`/`doy_cos`).
+
+#### ⚠️ Edge Cases & Hardware Diagnostics
+7. **Severe Cold Start (<6 Days)**: Only 3 days of telemetry. Verifies graceful failure with `INSUFFICIENT_HISTORY`.
+8. **Borderline Cold Start (Exact 6-Day Min)**: Exactly 6 days of telemetry. Tests the mathematical threshold of rolling statistics.
+9. **Negative Gain / Store Consumption**: Hive weight drops at flow tail as bees consume stores.
+10. **Intermittent Sensor Outage**: Missing IoT readings mid-sequence. Tests robustness of rolling window aggregations against packet loss.
+
+### Additional Features
+- **Flow Timeline Visualizer**: Real-time progress bar displaying elapsed flow days vs predicted remaining window.
+- **Direct Feature Mode**: Switch to the "Direct Features" tab to test model inference directly against a 22-dimensional feature vector.
+- **One-Click JSON Formatter & Copy**: Formats input telemetry and copies structured output JSON.
 
 ---
 

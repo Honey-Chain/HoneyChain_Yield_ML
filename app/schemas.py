@@ -9,29 +9,29 @@ class DailyTelemetryReading(BaseModel):
         description="Date or ISO timestamp of the reading (e.g. '2026-05-01' or '2026-05-01T00:00:00Z')",
         examples=["2026-05-01"]
     )
-    weight: float = Field(
-        ...,
+    weight: Optional[float] = Field(
+        default=None,
         description="Daily average hive weight in kilograms (kg)",
         ge=0.0,
         le=200.0,
         examples=[54.2]
     )
-    temperature: float = Field(
-        ...,
+    temperature: Optional[float] = Field(
+        default=None,
         description="Daily mean ambient temperature in degrees Celsius (°C)",
         ge=-40.0,
         le=60.0,
         examples=[23.5]
     )
-    humidity: float = Field(
-        ...,
+    humidity: Optional[float] = Field(
+        default=None,
         description="Daily mean relative humidity percentage (%)",
         ge=0.0,
         le=100.0,
         examples=[65.0]
     )
-    flow: float = Field(
-        ...,
+    flow: Optional[float] = Field(
+        default=None,
         description="Daily total bee entry/exit traffic count",
         examples=[180.0]
     )

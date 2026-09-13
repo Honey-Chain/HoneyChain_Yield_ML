@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="amber">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,43 +8,81 @@
 </head>
 <body>
   <div class="container">
+    <!-- Top Header -->
     <header class="header">
       <div class="logo-area">
         <span class="logo-icon">🍯</span>
         <div>
           <h1>HoneyChain Yield ML Service</h1>
-          <p class="subtitle">Harvest Window Prediction Model (<span id="model-tag">yield-production-v1</span>)</p>
+          <p class="subtitle">Harvest Window Prediction Model &bull; <span id="model-tag">yield-production-v1</span></p>
         </div>
       </div>
-      <div class="header-badge" id="health-badge">Checking service...</div>
+
+      <div class="header-controls">
+        <!-- Theme Switcher -->
+        <div class="theme-selector">
+          <label for="theme-select" class="theme-label">Theme:</label>
+          <select id="theme-select" class="theme-dropdown" onchange="changeTheme(this.value)">
+            <option value="amber">🍯 Honey Amber</option>
+            <option value="dark">🌙 Dark Apiary</option>
+            <option value="forest">🌿 Forest Green</option>
+            <option value="tech">⚡ Cyber Apiary</option>
+          </select>
+        </div>
+
+        <div class="header-badge" id="health-badge">Checking service...</div>
+      </div>
     </header>
 
+    <!-- Main Grid -->
     <div class="content-grid">
-      <!-- Left Column: Input Form -->
+      <!-- Left Column: Inputs & Scenarios -->
       <div class="card">
-        <h2>Telemetry Inputs</h2>
-        <p class="section-desc">Test with standard biological scenarios or enter custom hive telemetry.</p>
+        <div class="card-header-flex">
+          <h2>Biological Telemetry Inputs</h2>
+          <div class="input-mode-toggle">
+            <button type="button" id="tab-telemetry" class="tab-btn active" onclick="switchInputMode('telemetry')">Daily Telemetry</button>
+            <button type="button" id="tab-features" class="tab-btn" onclick="switchInputMode('features')">Direct Features</button>
+          </div>
+        </div>
+        <p class="section-desc">Select from 10 biological presets or enter live apiary telemetry.</p>
         
-        <div class="preset-group">
-          <label class="label">Quick Preset Scenarios:</label>
-          <div class="btn-group">
-            <button type="button" class="btn btn-preset" onclick="loadPreset('early_strong_flow')">Early Strong Flow</button>
-            <button type="button" class="btn btn-preset" onclick="loadPreset('plateauing_flow')">Plateauing Flow</button>
-            <button type="button" class="btn btn-preset" onclick="loadPreset('cold_start')">Cold Start (&lt;6 Days)</button>
-            <button type="button" class="btn btn-preset" onclick="loadPreset('negative_gain')">Store Depletion</button>
+        <!-- Category Filter Tabs -->
+        <div class="preset-section">
+          <div class="category-tabs">
+            <button type="button" class="cat-pill active" onclick="filterCategory('all', this)">All Presets (10)</button>
+            <button type="button" class="cat-pill" onclick="filterCategory('flow_phases', this)">🌸 Flow Phases</button>
+            <button type="button" class="cat-pill" onclick="filterCategory('environmental', this)">🌦️ Climate & Stress</button>
+            <button type="button" class="cat-pill" onclick="filterCategory('edge_cases', this)">⚠️ Edge Diagnostics</button>
+          </div>
+
+          <!-- Preset Buttons Grid -->
+          <div class="preset-grid" id="preset-buttons-container">
+            <!-- Populated dynamically by app.js -->
+          </div>
+
+          <!-- Active Preset Info Card -->
+          <div class="preset-info-card" id="preset-info-card" style="display: none;">
+            <div class="preset-info-top">
+              <span class="preset-badge" id="preset-badge">Surge</span>
+              <strong id="preset-title">Scenario Name</strong>
+            </div>
+            <p id="preset-description" class="preset-desc-text"></p>
+            <div class="preset-meta-chips" id="preset-meta-chips"></div>
           </div>
         </div>
 
+        <!-- Telemetry Form -->
         <form id="predict-form" onsubmit="handlePredict(event)">
           <div class="form-row">
             <div class="form-group">
               <label for="hive-id">Hive Identifier</label>
               <input type="text" id="hive-id" class="input" value="HIVE-KV-201" required />
             </div>
-            <div class="form-group">
+            <div class="form-group" id="flow-days-group">
               <label for="days-into-flow">Days Into Flow</label>
               <input type="number" id="days-into-flow" class="input" value="14" min="0" required />
-              <span class="help-text">Days since 7-day avg gain &ge; 0.20 kg/day</span>
+              <span class="help-text">Days since 7d gain &ge; 0.20 kg/d</span>
             </div>
             <div class="form-group">
               <label for="margin">Margin (&plusmn; Days)</label>
@@ -52,13 +90,30 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <div class="history-header">
-              <label for="telemetry-json">Daily Telemetry History (JSON Array)</label>
-              <span id="record-count" class="badge-count">0 days</span>
+          <!-- Raw Telemetry Mode -->
+          <div id="telemetry-input-container">
+            <div class="form-group">
+              <div class="history-header">
+                <label for="telemetry-json">Daily Aggregated History (JSON Array)</label>
+                <div class="badge-wrapper">
+                  <span id="record-count" class="badge-count">0 days</span>
+                </div>
+              </div>
+              <textarea id="telemetry-json" class="textarea" rows="11" spellcheck="false" required></textarea>
+              <span class="help-text">Required metrics: timestamp, weight (kg), temperature (&deg;C), humidity (%), flow. Hard min 6 days, 14+ recommended.</span>
             </div>
-            <textarea id="telemetry-json" class="textarea" rows="12" spellcheck="false" required></textarea>
-            <span class="help-text">Columns: timestamp, weight (kg), temperature (&deg;C), humidity (%), flow (bee traffic). Strict min 6 days, 14+ recommended.</span>
+          </div>
+
+          <!-- Direct Features Mode (Hidden by default) -->
+          <div id="features-input-container" style="display: none;">
+            <div class="form-group">
+              <div class="history-header">
+                <label for="features-json">22-Dimensional Feature Vector (JSON Object)</label>
+                <button type="button" class="btn btn-tiny" onclick="loadSampleFeatureVector()">Load Sample Vector</button>
+              </div>
+              <textarea id="features-json" class="textarea" rows="11" spellcheck="false"></textarea>
+              <span class="help-text">Requires all 22 engineered features defined in feature_config.json.</span>
+            </div>
           </div>
 
           <div class="form-actions">
@@ -66,41 +121,62 @@
               <span id="btn-text">Run Harvest Prediction</span>
               <span id="btn-spinner" class="spinner" style="display: none;"></span>
             </button>
-            <button type="button" class="btn btn-secondary" onclick="formatJSON()">Format JSON</button>
+            <button type="button" class="btn btn-secondary" onclick="formatActiveJSON()">Format JSON</button>
+            <button type="button" class="btn btn-secondary" onclick="resetToCurrentPreset()">Reset Preset</button>
           </div>
         </form>
       </div>
 
-      <!-- Right Column: Results & Feedback -->
+      <!-- Right Column: Inference Result & Dashboard -->
       <div class="card result-card">
-        <h2>Inference Result</h2>
-        <p class="section-desc">Harvest window recommendations formatted for beekeeper safety.</p>
+        <h2>Harvest Forecast Dashboard</h2>
+        <p class="section-desc">Biological harvest window recommendations and error bounds.</p>
 
         <!-- Initial Placeholder State -->
         <div id="result-placeholder" class="placeholder-state">
-          <div class="placeholder-icon">📊</div>
-          <p>Submit telemetry data or select a preset to evaluate the model.</p>
+          <div class="placeholder-icon">🐝</div>
+          <h3>Awaiting Model Telemetry</h3>
+          <p>Choose a biological preset or submit custom telemetry to evaluate harvest dates.</p>
         </div>
 
         <!-- Error State -->
         <div id="result-error" class="error-banner" style="display: none;">
-          <h3 id="error-title">Error</h3>
+          <div class="error-header">
+            <span class="error-icon">⚠️</span>
+            <h3 id="error-title">Validation Notice</h3>
+          </div>
           <p id="error-message"></p>
+          <div class="error-advice" id="error-advice"></div>
         </div>
 
         <!-- Success Prediction State -->
         <div id="result-success" class="prediction-display" style="display: none;">
-          <div class="status-pill status-ok">Status: OK</div>
+          <div class="status-bar">
+            <div class="status-pill status-ok" id="res-status-pill">Status: OK</div>
+            <span class="timestamp-tag" id="res-timestamp">--</span>
+          </div>
           
           <div class="metric-highlight">
             <div class="metric-label">Recommended Harvest Window Range</div>
             <div class="metric-range" id="res-range">--</div>
-            <div class="metric-sub">Expected Point Estimate: <strong id="res-days">--</strong> remaining</div>
+            <div class="metric-sub">Point Forecast: <strong id="res-days">--</strong> remaining</div>
+            
+            <!-- Flow Timeline Visualizer -->
+            <div class="flow-timeline">
+              <div class="timeline-labels">
+                <span>Flow Start</span>
+                <span id="timeline-current-label">Current: Day 14</span>
+                <span id="timeline-end-label">Est. Total: 23d</span>
+              </div>
+              <div class="timeline-bar">
+                <div class="timeline-progress" id="timeline-progress" style="width: 60%;"></div>
+              </div>
+            </div>
           </div>
 
           <div class="detail-grid">
             <div class="detail-item">
-              <span class="detail-label">Confidence</span>
+              <span class="detail-label">Confidence Rating</span>
               <span class="detail-val badge-low" id="res-confidence">LOW</span>
             </div>
             <div class="detail-item">
@@ -108,12 +184,12 @@
               <span class="detail-val" id="res-hive">--</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">Model Engine</span>
+              <span class="detail-label">Inference Model</span>
               <span class="detail-val" id="res-model">--</span>
             </div>
             <div class="detail-item">
-              <span class="detail-label">Evaluated At</span>
-              <span class="detail-val" id="res-timestamp">--</span>
+              <span class="detail-label">Error Margin</span>
+              <span class="detail-val" id="res-margin">&plusmn;5 Days</span>
             </div>
           </div>
 
@@ -127,15 +203,19 @@
         <div class="raw-response-area">
           <div class="raw-header" onclick="toggleRaw()">
             <span>Raw JSON Response</span>
-            <span id="raw-toggle-arrow">&blacktriangledown;</span>
+            <div class="raw-actions">
+              <button type="button" class="btn-copy" onclick="copyRawJson(event)">Copy JSON</button>
+              <span id="raw-toggle-arrow">&blacktriangledown;</span>
+            </div>
           </div>
           <pre id="raw-json" class="raw-box">Waiting for inference...</pre>
         </div>
       </div>
     </div>
 
+    <!-- Footer -->
     <footer class="footer">
-      <p>HoneyChain Ecosystem &bull; Yield Production ML Microservice &bull; <a href="/docs" target="_blank">Swagger OpenAPI Docs</a> &bull; <a href="/model-info" target="_blank">Model Info Metadata</a></p>
+      <p>HoneyChain Ecosystem &bull; Yield Production ML Microservice &bull; <a href="/docs" target="_blank">Swagger OpenAPI</a> &bull; <a href="/model-info" target="_blank">Model Info Metadata</a> &bull; <a href="https://github.com/Dhritish-Mukherjee/HoneyChain_Yield_ML" target="_blank">GitHub Repository</a></p>
     </footer>
   </div>
 

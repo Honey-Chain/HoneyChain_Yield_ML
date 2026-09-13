@@ -28,10 +28,38 @@ def test_sample_data_endpoint():
     response = client.get("/api/sample-data")
     assert response.status_code == 200
     data = response.json()
-    assert "early_strong_flow" in data
-    assert "plateauing_flow" in data
-    assert "cold_start" in data
-    assert "negative_gain" in data
+    expected_presets = [
+        "early_strong_flow", "peak_mid_flow", "plateauing_flow",
+        "heatwave_drought", "monsoon_stall", "autumn_late_flow",
+        "cold_start", "borderline_min_days", "negative_gain", "sensor_gap"
+    ]
+    for preset in expected_presets:
+        assert preset in data, f"Preset {preset} missing from sample data"
+        assert "category" in data[preset]
+        assert "badge" in data[preset]
+        assert "description" in data[preset]
+        assert len(data[preset]["history"]) > 0
+
+
+def test_predict_all_preset_scenarios():
+    response = client.get("/api/sample-data")
+    data = response.json()
+    for preset_key, sc in data.items():
+        payload = {
+            "hiveId": sc["hiveId"],
+            "days_into_flow": sc["days_into_flow"],
+            "history": sc["history"]
+        }
+        res = client.post("/predict", json=payload)
+        assert res.status_code == 200
+        res_data = res.json()
+        if preset_key == "cold_start":
+            assert res_data["success"] is False
+            assert res_data["status"] == "INSUFFICIENT_HISTORY"
+        else:
+            assert res_data["success"] is True
+            assert res_data["status"] == "OK"
+            assert "expectedHarvestWindowDays" in res_data["prediction"]
 
 
 def test_predict_early_strong_flow():
