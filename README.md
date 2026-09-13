@@ -1,109 +1,350 @@
-# Smart Beehive ML: Harvest Window Prediction API
+# HoneyChain - Yield Production ML Microservice
 
-## 1. Executive Summary
+Production-grade machine learning microservice for the **HoneyChain** ecosystem, providing real-time **Expected Harvest Window (Days Remaining)** predictions for active apiary nectar flows.
 
-This machine learning microservice predicts the **Expected Harvest Window (Days Remaining)** for an active beehive during a nectar flow.
-
-* **Temporal vs. Absolute Targets:** This model predicts a *temporal* target, NOT absolute honey yield in kilograms. Absolute mass predictions suffer from hardware covariate shift due to physical differences in tare weights across hive boxes. Temporal dynamics (weight acceleration and deceleration) transfer universally.
-* **Inference Frequency:** Beehives operate on a 24-hour biological cycle. Run this inference script **once per day** (e.g., at 23:59) for each active hive. Running it more frequently wastes compute power and violates the daily resolution of the training data.
-
----
-
-## 2. Telemetry Ingestion & Aggregation
-
-The model strictly requires daily historical summaries. Raw 10-minute IoT sensor pings must be aggregated in a two-step process before inference:
-
-* **Step 1: Hourly Aggregation**
-Group the incoming 10-minute pings into 1-hour buckets.
-* `weight`, `temperature`, `humidity`: Calculate the **Mean** (Average).
-* `flow`: Calculate the **Sum** (Total bee movement in/out).
-
-* **Step 2: Daily Aggregation**
-Group the 24 hourly buckets into a single daily summary. The resulting database table or dataframe must have exactly one row per day per hive.
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![LightGBM](https://img.shields.io/badge/LightGBM-4.3+-brightgreen.svg?style=flat)](https://lightgbm.readthedocs.io/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
 
-## 3. Flow State Tracking (`days_into_flow`)
+## 1. Overview & Machine Learning Core
 
-The model evaluates *active nectar flows*. The backend is responsible for tracking when a flow starts and providing the `days_into_flow` integer to the model.
+This service encapsulates the HoneyChain Harvest Window prediction model. Rather than predicting volatile absolute mass in kilograms (which suffers from severe hardware covariate shift due to physical differences in tare weights across hive boxes and scales), the model predicts a **temporal target**: the remaining duration (in days) of an active nectar flow.
 
-* **Flow Start:** A flow is considered active when the 7-day average weight gain hits `>= 0.20 kg/day`.
-* **Flow End:** A flow is considered terminated when the 7-day average weight gain drops to `< 0.05 kg/day`.
-* **Backend Responsibility:** Maintain a state counter of how many days the current flow has been active, and pass this exact integer at inference time.
+- **Model Artifact**: `harvest_window_lgbm.pkl` (Serialized LightGBM Regressor)
+- **Model Version**: `yield-production-v1`
+- **Target Metric**: `days_to_flow_end` (Expected remaining days until harvest / flow plateau)
+- **Model Hyperparameters**: `n_estimators=300, learning_rate=0.05, max_depth=4, num_leaves=15, min_child_samples=10, subsample=0.8, colsample_bytree=0.8, random_state=42`
+- **Validation Strategy**: Leave-One-Flow-Out Cross-Validation (LOFO-CV) evaluated over 8 ground-truth flows across Wurzburg and Schwartau apiaries.
+- **Model Performance**:
+  - Baseline MAE: $\approx 6.31$ days
+  - Model MAE: $\approx 5.01 - 5.5$ days ($R^2 \approx 0.140$)
+  - Typical Operational Error Margin: $\pm 5$ days (worst observed case: $\approx 19.8$ days)
+  - Confidence Rating: `LOW` (Reflects biological nature of small ground-truth flow sample size; clients must present the **range** rather than raw point estimate).
 
 ---
 
-## 4. Model Inference Architecture
+## 2. Architecture & Data Pipeline
 
-To prevent train-serve skew, the backend **must not** engineer the rolling features. The `build_live_features` function inside `inference.py` computes all complex rolling averages (e.g., 3-day, 7-day, 14-day metrics) dynamically right before prediction using the same mathematical logic as the training loop.
+```
+[ ESP32 Apiary Gateway ]
+          │ (10-min sensor pings: weight, temp, humidity, bee flow)
+          ▼
+[ HoneyChain Backend ] ── Hourly & Daily Aggregation
+          │
+          │ Daily summaries (min 6 days, 14+ recommended) + days_into_flow
+          ▼
+[ HoneyChain_Yield_ML Microservice (FastAPI :5002) ]
+          │
+          ├──> Preprocessing Pipeline (app/service.py)
+          │    - 1-day weight diffs & rolling gain rates (3d, 7d, 14d)
+          │    - Weight volatility & standard deviations (3d, 7d, 14d)
+          │    - Gain acceleration (3d gain rate - 7d gain rate)
+          │    - Rolling bee flow (3d, 7d, absolute 7d)
+          │    - Environmental moving averages (temperature, humidity)
+          │    - Seasonal cyclical encodings (sin/cos day-of-year)
+          │
+          ├──> LightGBM Regressor (harvest_window_lgbm.pkl)
+          │
+          ▼
+[ Structured Prediction Response ]
+  • expectedHarvestWindowDays: 12
+  • harvestWindowRange: "7-17 days"
+  • confidence: "LOW"
+```
 
-* **No External Forecasts:** The model evaluates internal hive physics. Do not substitute future Weather API forecasts into the historical `temperature` fields.
+### Telemetry Preprocessing & Feature Engineering
+To eliminate train-serve skew, the service dynamically engineers the **22 biological and physical rolling features** from daily continuous telemetry:
+
+| Feature Category | Features | Description |
+|---|---|---|
+| **Weight Dynamics** | `weight`, `weight_change_1d`, `gain_rate_3d`, `gain_rate_7d`, `gain_rate_14d`, `weight_std_3d`, `weight_std_7d`, `weight_std_14d`, `gain_accel`, `weight_vs_14d` | Real-time hive mass velocity, stability, and nectar accumulation acceleration |
+| **Colony Foraging Activity** | `flow`, `flow_roll_3d`, `flow_roll_7d`, `flow_abs_7d` | Moving averages and absolute traffic through the hive entrance |
+| **Microclimate & Weather** | `temperature`, `temp_roll_7d`, `temp_roll_14d`, `humidity`, `humid_roll_7d` | Ambient environmental conditions dictating nectar secretion |
+| **Seasonal / Solar** | `doy_sin`, `doy_cos` | Cyclical trigonometric encoding of Day-of-Year |
+| **Flow State** | `days_into_flow` | Integer counter of days since nectar flow detection |
 
 ---
 
-## 5. API Payload Contract
+## 3. REST API Specification
 
-### Input Schema
+### Endpoints Overview
 
-Pass `history_df` and `days_into_flow` to the `predict_harvest_window()` function:
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Microservice health check and model loading state |
+| `GET` | `/model-info` | Detailed model metadata, feature list, and performance metrics |
+| `POST` | `/predict` | **Primary Endpoint**: Predicts harvest window from telemetry history |
+| `POST` | `/predict/features` | Direct inference with pre-computed 22-dimensional feature vector |
+| `GET` | `/api/sample-data` | Pre-built test scenarios (Early flow, plateauing, cold start) |
+| `GET` | `/` | Built-in interactive browser testing frontend |
+| `GET` | `/docs` | Interactive Swagger / OpenAPI documentation |
 
-1. `history_df` (Pandas DataFrame): Minimum 6 days of continuous daily summaries ending today, sorted oldest to newest. Required columns: `timestamp`, `weight`, `temperature`, `humidity`, `flow`.
-2. `days_into_flow` (Integer): Tracked state from the backend flow-detection logic.
+---
 
-### Output Schema
+### `POST /predict` (Primary Endpoint)
 
-The API returns a dictionary explicitly exposing error bounds to ensure UI safety. **The frontend MUST display the `harvestWindowRange` rather than the raw integer to accurately manage beekeeper expectations.**
+#### Request Headers
+```http
+Content-Type: application/json
+```
 
-**Success Response:**
-
+#### Request Body
 ```json
 {
+  "hiveId": "HIVE-KV-201",
+  "days_into_flow": 14,
+  "margin": 5,
+  "history": [
+    {
+      "timestamp": "2026-05-01",
+      "weight": 52.4,
+      "temperature": 23.5,
+      "humidity": 65.0,
+      "flow": 180.0
+    },
+    ... (requires >= 6 daily records; 14+ records recommended)
+  ]
+}
+```
+
+#### Response: Success (200 OK)
+```json
+{
+  "success": true,
   "status": "OK",
-  "expectedHarvestWindowDays": 20,
-  "harvestWindowRange": "15-25 days",
+  "hiveId": "HIVE-KV-201",
+  "prediction": {
+    "expectedHarvestWindowDays": 12,
+    "harvestWindowRange": "7-17 days",
+    "minDays": 7,
+    "maxDays": 17
+  },
   "confidence": "LOW",
-  "note": "Typical error +/- 5 days, worst observed ~19 days. Re-check as the flow develops."
+  "note": "Typical error +/-5 days, worst observed ~19 days. Re-check daily as the flow develops.",
+  "model": "yield-production-v1",
+  "timestamp": "2026-09-13T08:58:30.123456+00:00"
 }
 ```
 
-**Error Response (Cold Start Violation):**
-The model requires a strict minimum of **6 days** of history to calculate baseline rolling averages safely. If insufficient data is passed, it fails gracefully:
-
+#### Response: Cold Start Rejection (200 OK)
 ```json
 {
+  "success": false,
   "status": "INSUFFICIENT_HISTORY",
-  "message": "Only 2 real day(s) of weight data, need at least 6."
+  "hiveId": "HIVE-KV-201",
+  "message": "Only 3 real day(s) of weight data, need at least 6.",
+  "model": "yield-production-v1",
+  "timestamp": "2026-09-13T08:58:30.123456+00:00"
 }
 ```
 
-**Error Response (Invalid Flow State):**
-If the backend attempts to pass a negative value for `days_into_flow`, the inference script explicitly blocks it to prevent logical failures.
-
+#### Response: Invalid Input (422 Unprocessable Entity)
 ```json
 {
-  "status": "INVALID_INPUT",
-  "message": "days_into_flow cannot be negative. Received: -5"
+  "detail": [
+    {
+      "type": "greater_than_equal",
+      "loc": ["body", "days_into_flow"],
+      "msg": "Input should be greater than or equal to 0"
+    }
+  ]
 }
 ```
 
 ---
 
-## 6. System Accuracy & Known Limitations
+## 4. HoneyChain Backend Integration
 
-This model was rigorously evaluated using Leave-One-Flow-Out Cross-Validation.
+A dedicated, ready-to-import TypeScript client is provided at [`integration/honeychain_client.ts`](integration/honeychain_client.ts).
 
-* **Average Performance:** The Mean Absolute Error (MAE) is roughly **~5.5 days**.
-* **Worst-Case Boundary:** In highly erratic or atypical nectar flows, the worst-case error can reach up to **~19.8 days**.
-* **The Sample Size Ceiling:** Extensive ablation testing revealed that expanding the historical window from 6 days to 30 days yields negligible improvements in accuracy. The error ceiling is dictated by the small volume of ground-truth nectar flow events available for training (8 total flows across 2 hives), not data recency.
-* **Cold Start Requirement:** To balance operational flexibility with stability, the system requires a hard minimum of **6 days** of continuous telemetry.
-* **Future Iterations:** Scaling the training dataset across a wider diversity of hardware profiles and seasons is the primary path to tightening the worst-case error bound.
+### Usage in Node.js / Express Backend
+
+```typescript
+import { yieldPredictionClient } from './services/yieldPredictionService';
+
+// Inside your scheduled daily evaluation cron or route handler:
+app.get('/api/hives/:hiveId/harvest-forecast', async (req, res) => {
+  try {
+    const { hiveId } = req.params;
+
+    // 1. Retrieve continuous daily summaries from MongoDB (ending today)
+    const dailyRecords = await DailyTelemetryModel.find({ hiveId })
+      .sort({ date: 1 })
+      .limit(30);
+
+    const history = dailyRecords.map(r => ({
+      timestamp: r.date.toISOString().split('T')[0],
+      weight: r.meanWeight,
+      temperature: r.meanTemperature,
+      humidity: r.meanHumidity,
+      flow: r.totalBeeFlow
+    }));
+
+    // 2. Track flow state: days since 7-day avg weight gain hit >= 0.20 kg/day
+    const daysIntoFlow = await calculateDaysIntoFlow(hiveId);
+
+    // 3. Request forecast from ML microservice
+    const result = await yieldPredictionClient.predictHarvestWindow(
+      hiveId,
+      daysIntoFlow,
+      history,
+      5 // optional margin in days
+    );
+
+    if (result.success && result.prediction) {
+      // NOTE: Always present harvestWindowRange to manage beekeeper expectations
+      return res.json({
+        hiveId,
+        harvestWindow: result.prediction.harvestWindowRange,
+        expectedDays: result.prediction.expectedHarvestWindowDays,
+        confidence: result.confidence,
+        note: result.note
+      });
+    } else {
+      return res.status(400).json({
+        error: result.status,
+        message: result.message
+      });
+    }
+  } catch (error: any) {
+    return res.status(500).json({ error: 'INTERNAL_ERROR', message: error.message });
+  }
+});
+```
 
 ---
 
-## 7. File Manifest & Dependencies
+## 5. Local Development & Verification
 
-Ensure the following files are located in the same directory as the backend worker:
+### Prerequisites
+- Python 3.12+
+- Git
 
-* `harvest_window_lgbm.pkl`: The serialized LightGBM model weights.
-* `inference.py`: The execution script containing `build_live_features` and `predict_harvest_window`.
-* `requirements.txt`: Strict Python environment dependencies (`lightgbm`, `pandas`, `numpy`, `scikit-learn`, `joblib`).
+### Quick Setup
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Dhritish-Mukherjee/HoneyChain_Yield_ML.git
+cd HoneyChain_Yield_ML
+
+# 2. Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Copy environment configuration
+cp .env.example .env
+
+# 5. Start the development server
+uvicorn app.main:app --host 0.0.0.0 --port 5002 --reload
+```
+
+Open `http://localhost:5002/` in your browser to access the interactive testing interface.
+
+### Running Test Suites
+
+```bash
+# Run FastAPI endpoint and integration test suite
+pytest -v tests/test_api.py
+
+# Run biological sanity and edge-case validation suite
+python test_model.py
+```
+
+---
+
+## 6. Testing Frontend
+
+The service includes a built-in validation dashboard at `/`:
+- **Scenario Presets**: One-click quick loading of real biological scenarios:
+  1. *Early Strong Nectar Flow* (Day 14, rapid ~1.5 kg/day gain).
+  2. *Plateauing Flow* (Day 34, dying flow, triggering imminent harvest).
+  3. *Severe Cold Start* (<6 days telemetry, verifies graceful rejection).
+  4. *Negative Gain / Store Consumption* (Drop at end of flow).
+- **Interactive Forms**: Modify `hiveId`, `days_into_flow`, error margins, and telemetry records.
+- **Visual Feedback**: Real-time loading spinners, error alerts, and harvest window metric highlights.
+
+---
+
+## 7. Deployment Instructions
+
+### Option A: Docker (Recommended)
+
+```bash
+# Build the Docker image
+docker build -t honeychain-yield-ml:latest .
+
+# Run container on port 5002
+docker run -d --name honeychain-yield-ml -p 5002:5002 honeychain-yield-ml:latest
+
+# Or using docker-compose
+docker-compose up -d
+```
+
+Check health:
+```bash
+curl -s http://localhost:5002/health | jq
+```
+
+### Option B: Render Deployment
+
+This repository includes a `render.yaml` blueprint:
+1. Connect the `HoneyChain_Yield_ML` repository in your [Render Dashboard](https://dashboard.render.com).
+2. Render automatically detects `render.yaml` and deploys as a Python Web Service.
+3. Configure environment variable `PORT=5002` (or let Render assign dynamically).
+4. Update `YIELD_ML_SERVICE_URL` in the HoneyChain backend with your Render URL.
+
+### Option C: Railway / Heroku / VPS
+
+The included `Procfile` allows instant one-click deployment:
+```text
+web: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-5002}
+```
+
+---
+
+## 8. Repository File Structure
+
+```text
+HoneyChain_Yield_ML/
+├── app/
+│   ├── __init__.py
+│   ├── config.py                 # Environment and application settings
+│   ├── schemas.py                # Pydantic v2 validation contracts
+│   ├── service.py                # Core inference service and biological presets
+│   ├── main.py                   # FastAPI application & route declarations
+│   └── static/
+│       ├── index.html            # Testing frontend dashboard
+│       ├── app.js                # Frontend scenario loader and client
+│       └── style.css             # Lightweight, responsive styling
+├── integration/
+│   └── honeychain_client.ts      # Ready-to-import TypeScript HoneyChain client
+├── tests/
+│   ├── __init__.py
+│   └── test_api.py               # Complete pytest test suite (10 test cases)
+├── Dockerfile                    # Production multi-stage Docker build
+├── .dockerignore                 # Docker ignore filters
+├── docker-compose.yml            # Local container orchestration
+├── Procfile                      # Process declaration for PaaS
+├── render.yaml                   # Render Blueprint specification
+├── requirements.txt              # Pinned Python dependencies
+├── .env.example                  # Environment template
+├── .gitignore                    # Git ignore rules
+├── harvest_window_lgbm.pkl       # Serialized LightGBM model weights
+├── feature_config.json           # Canonical feature definitions
+├── inference.py                  # Standalone inference helper
+├── test_model.py                 # Biological edge-case validation script
+└── README.md                     # Microservice documentation
+```
+
+---
+
+## 9. License
+
+This microservice is maintained under the MIT License for the HoneyChain decentralized apiary intelligence platform.

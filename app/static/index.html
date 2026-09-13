@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HoneyChain Yield Prediction ML Service</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-area">
+        <span class="logo-icon">🍯</span>
+        <div>
+          <h1>HoneyChain Yield ML Service</h1>
+          <p class="subtitle">Harvest Window Prediction Model (<span id="model-tag">yield-production-v1</span>)</p>
+        </div>
+      </div>
+      <div class="header-badge" id="health-badge">Checking service...</div>
+    </header>
+
+    <div class="content-grid">
+      <!-- Left Column: Input Form -->
+      <div class="card">
+        <h2>Telemetry Inputs</h2>
+        <p class="section-desc">Test with standard biological scenarios or enter custom hive telemetry.</p>
+        
+        <div class="preset-group">
+          <label class="label">Quick Preset Scenarios:</label>
+          <div class="btn-group">
+            <button type="button" class="btn btn-preset" onclick="loadPreset('early_strong_flow')">Early Strong Flow</button>
+            <button type="button" class="btn btn-preset" onclick="loadPreset('plateauing_flow')">Plateauing Flow</button>
+            <button type="button" class="btn btn-preset" onclick="loadPreset('cold_start')">Cold Start (&lt;6 Days)</button>
+            <button type="button" class="btn btn-preset" onclick="loadPreset('negative_gain')">Store Depletion</button>
+          </div>
+        </div>
+
+        <form id="predict-form" onsubmit="handlePredict(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="hive-id">Hive Identifier</label>
+              <input type="text" id="hive-id" class="input" value="HIVE-KV-201" required />
+            </div>
+            <div class="form-group">
+              <label for="days-into-flow">Days Into Flow</label>
+              <input type="number" id="days-into-flow" class="input" value="14" min="0" required />
+              <span class="help-text">Days since 7-day avg gain &ge; 0.20 kg/day</span>
+            </div>
+            <div class="form-group">
+              <label for="margin">Margin (&plusmn; Days)</label>
+              <input type="number" id="margin" class="input" value="5" min="1" max="15" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="history-header">
+              <label for="telemetry-json">Daily Telemetry History (JSON Array)</label>
+              <span id="record-count" class="badge-count">0 days</span>
+            </div>
+            <textarea id="telemetry-json" class="textarea" rows="12" spellcheck="false" required></textarea>
+            <span class="help-text">Columns: timestamp, weight (kg), temperature (&deg;C), humidity (%), flow (bee traffic). Strict min 6 days, 14+ recommended.</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" id="submit-btn" class="btn btn-primary">
+              <span id="btn-text">Run Harvest Prediction</span>
+              <span id="btn-spinner" class="spinner" style="display: none;"></span>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="formatJSON()">Format JSON</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Column: Results & Feedback -->
+      <div class="card result-card">
+        <h2>Inference Result</h2>
+        <p class="section-desc">Harvest window recommendations formatted for beekeeper safety.</p>
+
+        <!-- Initial Placeholder State -->
+        <div id="result-placeholder" class="placeholder-state">
+          <div class="placeholder-icon">📊</div>
+          <p>Submit telemetry data or select a preset to evaluate the model.</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="result-error" class="error-banner" style="display: none;">
+          <h3 id="error-title">Error</h3>
+          <p id="error-message"></p>
+        </div>
+
+        <!-- Success Prediction State -->
+        <div id="result-success" class="prediction-display" style="display: none;">
+          <div class="status-pill status-ok">Status: OK</div>
+          
+          <div class="metric-highlight">
+            <div class="metric-label">Recommended Harvest Window Range</div>
+            <div class="metric-range" id="res-range">--</div>
+            <div class="metric-sub">Expected Point Estimate: <strong id="res-days">--</strong> remaining</div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-label">Confidence</span>
+              <span class="detail-val badge-low" id="res-confidence">LOW</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Hive ID</span>
+              <span class="detail-val" id="res-hive">--</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Model Engine</span>
+              <span class="detail-val" id="res-model">--</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Evaluated At</span>
+              <span class="detail-val" id="res-timestamp">--</span>
+            </div>
+          </div>
+
+          <div class="advisory-box">
+            <strong>Biological Notice:</strong>
+            <p id="res-note"></p>
+          </div>
+        </div>
+
+        <!-- Raw JSON Inspector -->
+        <div class="raw-response-area">
+          <div class="raw-header" onclick="toggleRaw()">
+            <span>Raw JSON Response</span>
+            <span id="raw-toggle-arrow">&blacktriangledown;</span>
+          </div>
+          <pre id="raw-json" class="raw-box">Waiting for inference...</pre>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>HoneyChain Ecosystem &bull; Yield Production ML Microservice &bull; <a href="/docs" target="_blank">Swagger OpenAPI Docs</a> &bull; <a href="/model-info" target="_blank">Model Info Metadata</a></p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

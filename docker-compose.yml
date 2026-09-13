@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  yield-ml-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: honeychain-yield-ml
+    restart: unless-stopped
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - HOST=0.0.0.0
+      - DEBUG=false
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
