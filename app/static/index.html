@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="amber">
+<html lang="en" data-theme="amber" data-mode="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>HoneyChain &bull; Yield Production ML Microservice</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <!-- Ambient Background Mesh -->
+  <!-- Ambient Atmospheric Mesh Lighting -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
@@ -19,7 +19,7 @@
     <header class="header">
       <div class="logo-area">
         <div class="logo-mark">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
@@ -37,7 +37,7 @@
         <div class="theme-control-group">
           <span class="control-label">Theme</span>
           <div class="theme-pill-group">
-            <button type="button" class="theme-pill-btn active" data-theme-val="amber" onclick="changeTheme('amber')" title="Honey Amber">
+            <button type="button" class="theme-pill-btn active" data-theme-val="amber" onclick="changeTheme('amber')" title="Obsidian Honey">
               <span class="theme-dot dot-amber"></span>
               <span class="theme-name">Amber</span>
             </button>
@@ -45,9 +45,9 @@
               <span class="theme-dot dot-dark"></span>
               <span class="theme-name">Dark</span>
             </button>
-            <button type="button" class="theme-pill-btn" data-theme-val="forest" onclick="changeTheme('forest')" title="Sage Garden">
+            <button type="button" class="theme-pill-btn" data-theme-val="forest" onclick="changeTheme('forest')" title="Botanical Sage">
               <span class="theme-dot dot-forest"></span>
-              <span class="theme-name">Forest</span>
+              <span class="theme-name">Sage</span>
             </button>
             <button type="button" class="theme-pill-btn" data-theme-val="tech" onclick="changeTheme('tech')" title="Cyber Slate">
               <span class="theme-dot dot-tech"></span>
@@ -56,9 +56,28 @@
           </div>
         </div>
 
+        <!-- Mode Toggle (Dark / Light) -->
+        <button type="button" id="mode-toggle" class="mode-toggle-btn" onclick="toggleColorMode()" title="Toggle Dark / Light Mode" aria-label="Toggle visual mode">
+          <svg id="mode-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg id="mode-icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+
+        <!-- Service Health Beacon -->
         <div class="header-badge" id="health-badge">
           <span class="pulse-indicator"></span>
-          <span id="health-text">Connecting...</span>
+          <span id="health-text" class="mono-text">Connecting...</span>
         </div>
       </div>
     </header>
@@ -89,14 +108,14 @@
           <div class="preset-section">
             <div class="category-tabs" role="tablist">
               <button type="button" class="cat-pill active" onclick="filterCategory('all', this)">All Scenarios (10)</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('flow_phases', this)">Flow Phases</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('environmental', this)">Climate &amp; Stress</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('edge_cases', this)">Edge Diagnostics</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('flow_phases', this)">Flow Dynamics</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('environmental', this)">Environmental Stress</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('edge_cases', this)">Diagnostic Edge Cases</button>
             </div>
 
             <!-- Preset Cards Grid -->
             <div class="preset-grid" id="preset-buttons-container">
-              <!-- Dynamically rendered by app.js -->
+              <!-- Dynamically populated by app.js -->
             </div>
 
             <!-- Active Scenario Meta Card -->
@@ -138,7 +157,7 @@
                   </div>
                 </div>
                 <div class="textarea-shell">
-                  <textarea id="telemetry-json" class="textarea mono-text" rows="10" spellcheck="false" required></textarea>
+                  <textarea id="telemetry-json" class="textarea mono-text" rows="9" spellcheck="false" required></textarea>
                 </div>
                 <span class="help-text">Columns: timestamp, weight (kg), temperature (&deg;C), humidity (%), flow. Hard min 6 continuous days, 14+ recommended.</span>
               </div>
@@ -155,7 +174,7 @@
                   </button>
                 </div>
                 <div class="textarea-shell">
-                  <textarea id="features-json" class="textarea mono-text" rows="10" spellcheck="false"></textarea>
+                  <textarea id="features-json" class="textarea mono-text" rows="9" spellcheck="false"></textarea>
                 </div>
                 <span class="help-text">Requires exact 22 pre-computed features specified in feature_config.json.</span>
               </div>
@@ -164,9 +183,10 @@
             <!-- Form Action Buttons -->
             <div class="form-actions">
               <button type="submit" id="submit-btn" class="btn btn-primary">
-                <span id="btn-text">Run Harvest Prediction</span>
+                <span id="btn-text">Run Harvest Forecast</span>
+                <span class="shortcut-badge mono-text">⌘↵</span>
                 <div class="btn-icon-circle">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
                   </svg>
@@ -174,11 +194,11 @@
                 <span id="btn-spinner" class="spinner" style="display: none;"></span>
               </button>
               <button type="button" class="btn btn-secondary" onclick="formatActiveJSON()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                 <span>Format</span>
               </button>
               <button type="button" class="btn btn-secondary" onclick="resetToCurrentPreset()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
                 <span>Reset</span>
               </button>
             </div>
@@ -200,33 +220,38 @@
           </div>
           <p class="section-desc">Real-time biological inference with error margins and telemetry trends.</p>
 
-          <!-- Telemetry Trend Sparkline Card -->
+          <!-- Telemetry Trend Sparkline / Oscilloscope Card -->
           <div class="trend-visualizer-card" id="trend-visualizer-card" style="display: none;">
             <div class="trend-header">
-              <span class="trend-title">Weight Trajectory &Delta;W (kg)</span>
+              <div class="trend-title-area">
+                <svg class="oscilloscope-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span class="trend-title">Telemetry Oscilloscope</span>
+              </div>
               <span class="trend-meta mono-text" id="trend-delta-summary">--</span>
             </div>
             <div class="trend-chart-box" id="trend-chart-container">
-              <!-- Inline SVG sparkline rendered by app.js -->
+              <!-- Inline SVG oscilloscope rendered by app.js -->
             </div>
+            <div class="chart-tooltip" id="chart-tooltip"></div>
           </div>
 
           <!-- Initial Empty State -->
           <div id="result-placeholder" class="placeholder-state">
             <div class="placeholder-icon-wrap">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
             <h3>Awaiting Telemetry Ingestion</h3>
-            <p>Select any scenario preset on the left or run custom telemetry to generate a harvest window prediction.</p>
+            <p>Select any scenario preset on the left or run custom telemetry to compute an automated harvest forecast.</p>
           </div>
 
           <!-- Error Alert Banner -->
           <div id="result-error" class="error-banner" style="display: none;">
             <div class="error-header">
               <div class="error-icon-box">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
               <h3 id="error-title">Inference Rejected</h3>
             </div>
@@ -238,7 +263,10 @@
           <div id="result-success" class="prediction-display" style="display: none;">
             <!-- Big Metric Highlight Banner -->
             <div class="metric-highlight">
-              <div class="metric-label">Recommended Harvest Window Range</div>
+              <div class="metric-header-flex">
+                <span class="metric-label">Recommended Harvest Window</span>
+                <span class="metric-badge-live mono-text">CALIBRATED</span>
+              </div>
               <div class="metric-range mono-text" id="res-range">--</div>
               <div class="metric-sub">Expected Point Estimate: <strong class="mono-text" id="res-days">--</strong> remaining</div>
               
@@ -259,7 +287,7 @@
             <div class="detail-grid">
               <div class="detail-item">
                 <span class="detail-label">Confidence Rating</span>
-                <span class="detail-val badge-low" id="res-confidence">LOW</span>
+                <span class="detail-val badge-confidence badge-low" id="res-confidence">LOW</span>
               </div>
               <div class="detail-item">
                 <span class="detail-label">Hive Identifier</span>
@@ -289,8 +317,8 @@
           <div class="raw-response-area">
             <div class="raw-header" onclick="toggleRaw()">
               <div class="raw-title-flex">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                <span>REST Response JSON</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                <span>REST Response Payload</span>
               </div>
               <div class="raw-actions">
                 <button type="button" class="btn-copy" onclick="copyRawJson(event)">
@@ -315,11 +343,14 @@
           <span class="link-sep">&bull;</span>
           <a href="/model-info" target="_blank">Model Specifications</a>
           <span class="link-sep">&bull;</span>
-          <a href="https://github.com/Dhritish-Mukherjee/HoneyChain_Yield_ML" target="_blank">GitHub Repository</a>
+          <a href="https://github.com/Honey-Chain/HoneyChain_Yield_ML" target="_blank">GitHub Repository</a>
         </div>
       </div>
     </footer>
   </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
 
   <script src="/static/app.js"></script>
 </body>

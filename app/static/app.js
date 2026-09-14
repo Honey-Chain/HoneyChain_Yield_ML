@@ -1,14 +1,17 @@
 /**
- * HoneyChain Yield ML Microservice - Frontend Application Engine
- * High-performance, anti-slop vanilla JavaScript controller
+ * HoneyChain Yield ML Microservice - Sleek & Premium Application Controller
+ * High-performance, anti-slop vanilla JavaScript engine
+ * Features: Telemetry Oscilloscope, Hardware State Controls, Micro-Interactions
  */
 
 let sampleData = {};
 let currentPresetKey = "early_strong_flow";
 let currentCategory = "all";
 let currentInputMode = "telemetry"; // 'telemetry' or 'features'
+let currentPointsData = []; // Cached points for oscilloscope hover tracking
 
 document.addEventListener("DOMContentLoaded", () => {
+  initVisualMode();
   initTheme();
   checkHealth();
   fetchSampleData();
@@ -17,14 +20,61 @@ document.addEventListener("DOMContentLoaded", () => {
   if (textarea) {
     textarea.addEventListener("input", updateRecordCount);
   }
+
+  // Keyboard shortcut: Cmd/Ctrl + Enter to trigger prediction
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      const form = document.getElementById("predict-form");
+      if (form) {
+        handlePredict(new Event("submit", { cancelable: true }));
+      }
+    }
+  });
+
+  // Setup interactive hover tracking for the oscilloscope
+  setupChartHover();
 });
 
 // ==========================================
-// Theme Management (Segmented Control)
+// Theme & Visual Mode Management
 // ==========================================
+function initVisualMode() {
+  const savedMode = localStorage.getItem("honeychain_mode") || "dark";
+  setColorMode(savedMode, false);
+}
+
 function initTheme() {
   const savedTheme = localStorage.getItem("honeychain_theme") || "amber";
   changeTheme(savedTheme, false);
+}
+
+function setColorMode(mode, save = true) {
+  document.documentElement.setAttribute("data-mode", mode);
+  if (save) {
+    localStorage.setItem("honeychain_mode", mode);
+  }
+
+  const sunIcon = document.getElementById("mode-icon-sun");
+  const moonIcon = document.getElementById("mode-icon-moon");
+  if (mode === "dark") {
+    if (sunIcon) sunIcon.style.display = "block";
+    if (moonIcon) moonIcon.style.display = "none";
+  } else {
+    if (sunIcon) sunIcon.style.display = "none";
+    if (moonIcon) moonIcon.style.display = "block";
+  }
+
+  if (currentPresetKey && sampleData[currentPresetKey]) {
+    renderTrendSparkline(sampleData[currentPresetKey].history);
+  }
+}
+
+function toggleColorMode() {
+  const current = document.documentElement.getAttribute("data-mode") || "dark";
+  const next = current === "dark" ? "light" : "dark";
+  setColorMode(next, true);
+  showToast(`Switched to ${next === "dark" ? "Obsidian Dark" : "Alabaster Light"} mode`);
 }
 
 function changeTheme(themeName, save = true) {
@@ -33,7 +83,7 @@ function changeTheme(themeName, save = true) {
     localStorage.setItem("honeychain_theme", themeName);
   }
 
-  // Update segmented control buttons
+  // Update theme pill segmented control
   document.querySelectorAll(".theme-pill-btn").forEach(btn => {
     if (btn.getAttribute("data-theme-val") === themeName) {
       btn.classList.add("active");
@@ -42,14 +92,14 @@ function changeTheme(themeName, save = true) {
     }
   });
 
-  // Re-render sparkline to reflect new theme accent colors
+  // Re-render oscilloscope with calibrated theme colors
   if (currentPresetKey && sampleData[currentPresetKey]) {
     renderTrendSparkline(sampleData[currentPresetKey].history);
   }
 }
 
 // ==========================================
-// Service Health & Scenarios Loading
+// Service Health & Scenarios Ingestion
 // ==========================================
 async function checkHealth() {
   const badge = document.getElementById("health-badge");
@@ -122,13 +172,13 @@ function loadPreset(key) {
   currentPresetKey = key;
   const scenario = sampleData[key];
 
-  // Update active card styling
+  // Update active state in cards grid
   document.querySelectorAll(".btn-preset-card").forEach(b => b.classList.remove("active"));
   const activeBtn = document.getElementById(`preset-btn-${key}`);
   if (activeBtn) activeBtn.classList.add("active");
 
-  // Update form inputs
-  document.getElementById("hive-id").value = scenario.hiveId || "HIVE-001";
+  // Populate inputs
+  document.getElementById("hive-id").value = scenario.hiveId || "HIVE-KV-201";
   document.getElementById("days-into-flow").value = scenario.days_into_flow;
   document.getElementById("margin").value = 5;
 
@@ -136,7 +186,7 @@ function loadPreset(key) {
   document.getElementById("telemetry-json").value = jsonStr;
   updateRecordCount();
 
-  // Render info card & telemetry sparkline
+  // Render info card and oscilloscope
   renderPresetInfoCard(scenario);
   renderTrendSparkline(scenario.history);
 }
@@ -153,10 +203,9 @@ function renderPresetInfoCard(scenario) {
   title.textContent = scenario.name;
   desc.textContent = scenario.description;
 
-  // Calculate quick stats from history
   const history = scenario.history || [];
-  let statsHtml = `<span class="chip">📅 ${history.length} Days History</span>`;
-  statsHtml += `<span class="chip">⏱️ Flow Day: ${scenario.days_into_flow}</span>`;
+  let statsHtml = `<span class="chip mono-text">${history.length}d Telemetry</span>`;
+  statsHtml += `<span class="chip mono-text">Flow Inception: Day ${scenario.days_into_flow}</span>`;
 
   if (history.length > 0) {
     const validWeights = history.map(h => h.weight).filter(w => w !== null && !isNaN(w));
@@ -165,7 +214,7 @@ function renderPresetInfoCard(scenario) {
       const endW = validWeights[validWeights.length - 1];
       const delta = (endW - startW).toFixed(2);
       const sign = delta >= 0 ? "+" : "";
-      statsHtml += `<span class="chip mono-text">⚖️ ${startW}kg &rarr; ${endW}kg (${sign}${delta}kg)</span>`;
+      statsHtml += `<span class="chip mono-text">${startW}kg &rarr; ${endW}kg (${sign}${delta}kg)</span>`;
     }
   }
 
@@ -175,11 +224,12 @@ function renderPresetInfoCard(scenario) {
 function resetToCurrentPreset() {
   if (currentPresetKey && sampleData[currentPresetKey]) {
     loadPreset(currentPresetKey);
+    showToast("Reset to active scenario defaults");
   }
 }
 
 // ==========================================
-// SVG Sparkline Trend Chart Generator
+// High-Precision Telemetry Oscilloscope
 // ==========================================
 function renderTrendSparkline(history) {
   const visualizerCard = document.getElementById("trend-visualizer-card");
@@ -188,6 +238,7 @@ function renderTrendSparkline(history) {
 
   if (!history || history.length < 2) {
     visualizerCard.style.display = "none";
+    currentPointsData = [];
     return;
   }
 
@@ -197,6 +248,7 @@ function renderTrendSparkline(history) {
 
   if (validPoints.length < 2) {
     visualizerCard.style.display = "none";
+    currentPointsData = [];
     return;
   }
 
@@ -211,19 +263,21 @@ function renderTrendSparkline(history) {
   const endW = weights[weights.length - 1];
   const netDelta = (endW - startW).toFixed(2);
   const netSign = netDelta >= 0 ? "+" : "";
-  deltaSummary.textContent = `${startW}kg → ${endW}kg (${netSign}${netDelta}kg net)`;
+  deltaSummary.textContent = `${startW.toFixed(1)}kg → ${endW.toFixed(1)}kg (${netSign}${netDelta}kg net)`;
 
-  const width = 460;
-  const height = 75;
-  const padTop = 10;
+  const width = 520;
+  const height = 90;
+  const padTop = 14;
   const padBottom = 16;
   const plotH = height - padTop - padBottom;
 
   const points = validPoints.map((p, i) => {
-    const x = (i / (validPoints.length - 1)) * (width - 20) + 10;
+    const x = (i / (validPoints.length - 1)) * (width - 40) + 20;
     const y = padTop + plotH - ((p.weight - minW) / rangeW) * plotH;
-    return { x, y, weight: p.weight };
+    return { x, y, weight: p.weight, day: i + 1, date: p.date, temp: p.temp };
   });
+
+  currentPointsData = points;
 
   // Build SVG path
   let pathD = `M ${points[0].x} ${points[0].y}`;
@@ -236,27 +290,113 @@ function renderTrendSparkline(history) {
 
   // Get current theme CSS colors
   const rootStyles = getComputedStyle(document.documentElement);
-  const chartLine = rootStyles.getPropertyValue("--chart-line").trim() || "#d97706";
-  const chartGradTop = rootStyles.getPropertyValue("--chart-gradient-top").trim() || "rgba(217, 119, 6, 0.25)";
-  const chartGradBottom = rootStyles.getPropertyValue("--chart-gradient-bottom").trim() || "rgba(217, 119, 6, 0.0)";
+  const chartLine = rootStyles.getPropertyValue("--chart-line").trim() || "#f59e0b";
+  const chartGlow = rootStyles.getPropertyValue("--chart-glow").trim() || "rgba(245, 158, 11, 0.4)";
+  const chartGradTop = rootStyles.getPropertyValue("--chart-gradient-top").trim() || "rgba(245, 158, 11, 0.24)";
+  const chartGradBottom = rootStyles.getPropertyValue("--chart-gradient-bottom").trim() || "rgba(245, 158, 11, 0.0)";
+  const chartGrid = rootStyles.getPropertyValue("--chart-grid").trim() || "rgba(255, 255, 255, 0.05)";
+  const chartText = rootStyles.getPropertyValue("--chart-text").trim() || "#6b7280";
+
+  // Grid line Y coordinates
+  const yMid = padTop + plotH / 2;
+  const midW = (minW + rangeW / 2).toFixed(1);
 
   const svgHtml = `
-    <svg viewBox="0 0 ${width} ${height}" class="sparkline-svg" preserveAspectRatio="none">
+    <svg viewBox="0 0 ${width} ${height}" class="sparkline-svg" preserveAspectRatio="none" id="oscilloscope-svg">
       <defs>
         <linearGradient id="sparkline-grad" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stop-color="${chartGradTop}"/>
           <stop offset="100%" stop-color="${chartGradBottom}"/>
         </linearGradient>
+        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${chartGlow}"/>
+        </filter>
       </defs>
+
+      <!-- Horizontal Grid Lines -->
+      <line x1="20" y1="${padTop}" x2="${width - 20}" y2="${padTop}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="22" y="${padTop + 9}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${maxW.toFixed(1)}kg</text>
+
+      <line x1="20" y1="${yMid}" x2="${width - 20}" y2="${yMid}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="22" y="${yMid + 9}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${midW}kg</text>
+
+      <line x1="20" y1="${padTop + plotH}" x2="${width - 20}" y2="${padTop + plotH}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
+      <text x="22" y="${padTop + plotH - 3}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${minW.toFixed(1)}kg</text>
+
+      <!-- Gradient Area -->
       <path d="${areaD}" fill="url(#sparkline-grad)"/>
-      <path d="${pathD}" fill="none" stroke="${chartLine}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-      <!-- Start and End Point Markers -->
-      <circle cx="${points[0].x}" cy="${points[0].y}" r="3.5" fill="${chartLine}"/>
+
+      <!-- Glowing Curved Trace -->
+      <path d="${pathD}" fill="none" stroke="${chartLine}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-filter)"/>
+
+      <!-- Start and Peak Markers -->
+      <circle cx="${points[0].x}" cy="${points[0].y}" r="3" fill="${chartLine}"/>
       <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="4.5" fill="${chartLine}" stroke="#ffffff" stroke-width="1.5"/>
+
+      <!-- Crosshair tracking elements (initially hidden) -->
+      <line id="ch-line" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" stroke="${chartLine}" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
+      <circle id="ch-dot" cx="0" cy="0" r="4" fill="${chartLine}" stroke="#ffffff" stroke-width="1.5" opacity="0"/>
     </svg>
   `;
 
   container.innerHTML = svgHtml;
+}
+
+function setupChartHover() {
+  const container = document.getElementById("trend-chart-container");
+  const tooltip = document.getElementById("chart-tooltip");
+  if (!container || !tooltip) return;
+
+  container.addEventListener("mousemove", (e) => {
+    if (!currentPointsData || currentPointsData.length === 0) return;
+
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const relX = mouseX / rect.width;
+
+    // Find closest point
+    const width = 520;
+    const targetSvgX = relX * width;
+
+    let closest = currentPointsData[0];
+    let minDist = Math.abs(closest.x - targetSvgX);
+
+    for (let i = 1; i < currentPointsData.length; i++) {
+      const dist = Math.abs(currentPointsData[i].x - targetSvgX);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = currentPointsData[i];
+      }
+    }
+
+    const chLine = document.getElementById("ch-line");
+    const chDot = document.getElementById("ch-dot");
+    if (chLine && chDot) {
+      chLine.setAttribute("x1", closest.x);
+      chLine.setAttribute("x2", closest.x);
+      chLine.setAttribute("opacity", "0.75");
+      chDot.setAttribute("cx", closest.x);
+      chDot.setAttribute("cy", closest.y);
+      chDot.setAttribute("opacity", "1");
+    }
+
+    // Position HTML tooltip
+    const tooltipX = (closest.x / width) * rect.width;
+    const tooltipY = (closest.y / 90) * rect.height;
+
+    tooltip.style.display = "block";
+    tooltip.style.left = `${tooltipX}px`;
+    tooltip.style.top = `${tooltipY}px`;
+    tooltip.innerHTML = `Day ${closest.day}: <strong>${closest.weight.toFixed(2)} kg</strong>${closest.temp ? ` • ${closest.temp}°C` : ""}`;
+  });
+
+  container.addEventListener("mouseleave", () => {
+    tooltip.style.display = "none";
+    const chLine = document.getElementById("ch-line");
+    const chDot = document.getElementById("ch-dot");
+    if (chLine) chLine.setAttribute("opacity", "0");
+    if (chDot) chDot.setAttribute("opacity", "0");
+  });
 }
 
 // ==========================================
@@ -318,6 +458,7 @@ function loadSampleFeatureVector() {
     days_into_flow: 14.0
   };
   document.getElementById("features-json").value = JSON.stringify(sample, null, 2);
+  showToast("Loaded 22-dimensional feature schema");
 }
 
 // ==========================================
@@ -334,13 +475,13 @@ function updateRecordCount() {
     if (Array.isArray(parsed)) {
       countBadge.textContent = `${parsed.length} day(s)`;
       if (parsed.length < 6) {
-        countBadge.style.background = "var(--danger-bg)";
+        countBadge.style.background = "var(--danger-soft)";
         countBadge.style.color = "var(--danger)";
       } else if (parsed.length < 14) {
         countBadge.style.background = "var(--primary-soft)";
-        countBadge.style.color = "var(--primary-text)";
+        countBadge.style.color = "var(--primary)";
       } else {
-        countBadge.style.background = "var(--success-bg)";
+        countBadge.style.background = "var(--success-soft)";
         countBadge.style.color = "var(--success)";
       }
       renderTrendSparkline(parsed);
@@ -350,7 +491,7 @@ function updateRecordCount() {
     // invalid json
   }
   countBadge.textContent = "invalid JSON";
-  countBadge.style.background = "var(--danger-bg)";
+  countBadge.style.background = "var(--danger-soft)";
   countBadge.style.color = "var(--danger)";
 }
 
@@ -362,13 +503,14 @@ function formatActiveJSON() {
     const parsed = JSON.parse(textarea.value);
     textarea.value = JSON.stringify(parsed, null, 2);
     if (isTelemetry) updateRecordCount();
+    showToast("JSON formatted cleanly");
   } catch (err) {
-    alert("Invalid JSON syntax: " + err.message);
+    showToast("Invalid JSON syntax", true);
   }
 }
 
 async function handlePredict(event) {
-  event.preventDefault();
+  if (event && event.preventDefault) event.preventDefault();
 
   const submitBtn = document.getElementById("submit-btn");
   const btnText = document.getElementById("btn-text");
@@ -426,8 +568,9 @@ async function handlePredict(event) {
 
   // Set loading state
   submitBtn.disabled = true;
-  btnText.textContent = "Computing Inference...";
+  btnText.textContent = "Computing Forecast...";
   btnSpinner.style.display = "inline-block";
+  const startTime = performance.now();
 
   try {
     const response = await fetch(endpoint, {
@@ -436,6 +579,7 @@ async function handlePredict(event) {
       body: JSON.stringify(payload)
     });
 
+    const latency = Math.round(performance.now() - startTime);
     const result = await response.json();
     rawBox.textContent = JSON.stringify(result, null, 2);
 
@@ -444,17 +588,21 @@ async function handlePredict(event) {
       errorBanner.style.display = "none";
       successCard.style.display = "block";
 
-      statusPill.textContent = "Status: OK";
+      statusPill.textContent = "Forecast Complete";
       statusPill.className = "status-pill status-ok";
 
       const pred = result.prediction;
       document.getElementById("res-range").textContent = pred.harvestWindowRange;
       document.getElementById("res-days").textContent = `${pred.expectedHarvestWindowDays} days`;
-      document.getElementById("res-confidence").textContent = result.confidence || "LOW";
+      
+      const confEl = document.getElementById("res-confidence");
+      confEl.textContent = result.confidence || "CALIBRATED";
+      confEl.className = `detail-val badge-confidence ${result.confidence === "HIGH" ? "badge-high" : "badge-low"}`;
+
       document.getElementById("res-hive").textContent = result.hiveId || hiveId;
-      document.getElementById("res-model").textContent = result.model;
+      document.getElementById("res-model").textContent = `${result.model} (${latency}ms)`;
       document.getElementById("res-margin").textContent = `±${margin} Days`;
-      document.getElementById("res-note").textContent = result.note || "Monitor flow developments daily.";
+      document.getElementById("res-note").textContent = result.note || "Continuous bloom monitoring recommended.";
 
       // Update flow timeline
       const daysIn = payload.days_into_flow || 0;
@@ -466,12 +614,13 @@ async function handlePredict(event) {
       document.getElementById("timeline-end-label").textContent = `Est. Total: ${totalDays}d`;
       document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
 
+      showToast(`Forecast generated in ${latency}ms`);
     } else {
       let advice = "";
       if (result.status === "INSUFFICIENT_HISTORY") {
-        advice = "Biological Guard: LightGBM rolling windows require at least 6 continuous daily records. Cold starts with <6 days fail gracefully to protect against invalid extrapolation.";
+        advice = "Biological Guard: LightGBM rolling features strictly require >= 6 continuous daily records to guard against mathematical extrapolation artifacts.";
       } else if (result.status === "INVALID_INPUT") {
-        advice = "Input Guard: Verify that days_into_flow is not negative and that all required columns are supplied.";
+        advice = "Input Guard: Verify that days_into_flow is not negative and that required columns are non-empty.";
       }
       showError(
         `Inference Rejected (${result.status || "ERROR"})`,
@@ -484,7 +633,7 @@ async function handlePredict(event) {
     rawBox.textContent = JSON.stringify({ error: err.message }, null, 2);
   } finally {
     submitBtn.disabled = false;
-    btnText.textContent = "Run Harvest Prediction";
+    btnText.textContent = "Run Harvest Forecast";
     btnSpinner.style.display = "none";
   }
 }
@@ -500,7 +649,7 @@ function showError(title, message, advice = "") {
   successCard.style.display = "none";
   errorBanner.style.display = "block";
 
-  statusPill.textContent = "Status: Alert";
+  statusPill.textContent = "Rejected";
   statusPill.className = "status-pill status-ready";
 
   document.getElementById("error-title").textContent = title;
@@ -529,12 +678,30 @@ function toggleRaw() {
 function copyRawJson(event) {
   event.stopPropagation();
   const text = document.getElementById("raw-json").textContent;
-  const copyText = document.getElementById("copy-text");
-
   navigator.clipboard.writeText(text).then(() => {
-    copyText.textContent = "Copied!";
-    setTimeout(() => { copyText.textContent = "Copy"; }, 1500);
+    showToast("JSON payload copied to clipboard");
   }).catch(err => {
     alert("Failed to copy JSON: " + err);
   });
+}
+
+function showToast(message, isError = false) {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  if (isError) toast.style.borderColor = "var(--danger-border)";
+
+  toast.innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${isError ? 'var(--danger)' : 'var(--primary)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span>${message}</span>
+  `;
+
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(10px) scale(0.95)";
+    setTimeout(() => toast.remove(), 250);
+  }, 2400);
 }
