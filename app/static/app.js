@@ -1,13 +1,13 @@
 /**
- * HoneyChain Yield ML Microservice - Museum-Grade Apiary Laboratory Engine
- * Controller: Telemetry Oscilloscope with Reticle, UTC Clock, Micro-Interactions
+ * HoneyChain Yield ML Microservice - Museum-Grade Controller
+ * Clean, uncluttered event loop with Channel Picker and Reticle Oscilloscope
  */
 
 let sampleData = {};
+let presetKeysOrder = [];
 let currentPresetKey = "early_strong_flow";
-let currentCategory = "all";
-let currentInputMode = "telemetry"; // 'telemetry' or 'features'
-let currentPointsData = []; // Cached points for oscilloscope hover tracking
+let currentInputMode = "telemetry";
+let currentPointsData = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   initVisualMode();
@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
     textarea.addEventListener("input", updateRecordCount);
   }
 
-  // Keyboard shortcut: Cmd/Ctrl + Enter to trigger prediction
   document.addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
@@ -32,17 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Setup interactive hover tracking for the oscilloscope
   setupChartHover();
 });
 
-// ==========================================
 // Live UTC Clock
-// ==========================================
 function initUtcClock() {
   const clockEl = document.getElementById("utc-clock");
   if (!clockEl) return;
-
   function update() {
     const now = new Date();
     const h = String(now.getUTCHours()).padStart(2, "0");
@@ -50,14 +45,11 @@ function initUtcClock() {
     const s = String(now.getUTCSeconds()).padStart(2, "0");
     clockEl.textContent = `${h}:${m}:${s} UTC`;
   }
-
   update();
   setInterval(update, 1000);
 }
 
-// ==========================================
-// Theme & Visual Mode Management
-// ==========================================
+// Visual Mode (Dark / Light)
 function initVisualMode() {
   const savedMode = localStorage.getItem("honeychain_mode") || "dark";
   setColorMode(savedMode, false);
@@ -70,9 +62,7 @@ function initTheme() {
 
 function setColorMode(mode, save = true) {
   document.documentElement.setAttribute("data-mode", mode);
-  if (save) {
-    localStorage.setItem("honeychain_mode", mode);
-  }
+  if (save) localStorage.setItem("honeychain_mode", mode);
 
   const sunIcon = document.getElementById("mode-icon-sun");
   const moonIcon = document.getElementById("mode-icon-moon");
@@ -98,11 +88,8 @@ function toggleColorMode() {
 
 function changeTheme(themeName, save = true) {
   document.documentElement.setAttribute("data-theme", themeName);
-  if (save) {
-    localStorage.setItem("honeychain_theme", themeName);
-  }
+  if (save) localStorage.setItem("honeychain_theme", themeName);
 
-  // Update theme pill segmented control
   document.querySelectorAll(".theme-pill-btn").forEach(btn => {
     if (btn.getAttribute("data-theme-val") === themeName) {
       btn.classList.add("active");
@@ -111,15 +98,12 @@ function changeTheme(themeName, save = true) {
     }
   });
 
-  // Re-render oscilloscope with calibrated theme colors
   if (currentPresetKey && sampleData[currentPresetKey]) {
     renderTrendSparkline(sampleData[currentPresetKey].history);
   }
 }
 
-// ==========================================
-// Service Health & Scenarios Ingestion
-// ==========================================
+// Health & Data
 async function checkHealth() {
   const badge = document.getElementById("health-badge");
   const text = document.getElementById("health-text");
@@ -143,50 +127,54 @@ async function fetchSampleData() {
   try {
     const res = await fetch("/api/sample-data");
     sampleData = await res.json();
-    renderPresetButtons(currentCategory);
+    presetKeysOrder = Object.keys(sampleData);
+    populatePresetDropdown();
     loadPreset("early_strong_flow");
   } catch (err) {
     console.error("Failed to load sample scenarios:", err);
   }
 }
 
-// ==========================================
-// Preset Categories & Rendering
-// ==========================================
-function filterCategory(category, btnElement) {
-  currentCategory = category;
-  document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
-  if (btnElement) btnElement.classList.add("active");
-  renderPresetButtons(category);
+function populatePresetDropdown() {
+  const select = document.getElementById("preset-select");
+  if (!select || !sampleData) return;
+
+  select.innerHTML = "";
+
+  const categories = {
+    "flow_phases": "Bank A • Flow Dynamics",
+    "environmental": "Bank B • Climate Stress",
+    "edge_cases": "Bank C • Diagnostic Guards"
+  };
+
+  Object.entries(categories).forEach(([catKey, catLabel]) => {
+    const group = document.createElement("optgroup");
+    group.label = catLabel;
+
+    Object.entries(sampleData).forEach(([key, item]) => {
+      if (item.category === catKey) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = `${item.badge || "Channel"}: ${item.name}`;
+        group.appendChild(opt);
+      }
+    });
+
+    select.appendChild(group);
+  });
 }
 
-function renderPresetButtons(category) {
-  const container = document.getElementById("preset-buttons-container");
-  if (!container || !sampleData) return;
+function onPresetSelectChange(key) {
+  loadPreset(key);
+}
 
-  container.innerHTML = "";
-
-  let idx = 1;
-  Object.entries(sampleData).forEach(([key, item]) => {
-    if (category !== "all" && item.category !== category) {
-      return;
-    }
-
-    const channelNum = String(idx).padStart(2, "0");
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `btn-preset-card ${key === currentPresetKey ? "active" : ""}`;
-    btn.id = `preset-btn-${key}`;
-    btn.onclick = () => loadPreset(key);
-
-    btn.innerHTML = `
-      <span class="preset-card-tag">CH ${channelNum} &bull; ${item.badge || "Preset"}</span>
-      <span class="preset-card-title">${item.name}</span>
-    `;
-
-    container.appendChild(btn);
-    idx++;
-  });
+function cyclePreset(direction) {
+  if (!presetKeysOrder || presetKeysOrder.length === 0) return;
+  const currIdx = presetKeysOrder.indexOf(currentPresetKey);
+  let nextIdx = currIdx + direction;
+  if (nextIdx < 0) nextIdx = presetKeysOrder.length - 1;
+  if (nextIdx >= presetKeysOrder.length) nextIdx = 0;
+  loadPreset(presetKeysOrder[nextIdx]);
 }
 
 function loadPreset(key) {
@@ -194,12 +182,9 @@ function loadPreset(key) {
   currentPresetKey = key;
   const scenario = sampleData[key];
 
-  // Update active state in cards grid
-  document.querySelectorAll(".btn-preset-card").forEach(b => b.classList.remove("active"));
-  const activeBtn = document.getElementById(`preset-btn-${key}`);
-  if (activeBtn) activeBtn.classList.add("active");
+  const select = document.getElementById("preset-select");
+  if (select) select.value = key;
 
-  // Populate inputs
   document.getElementById("hive-id").value = scenario.hiveId || "HIVE-KV-201";
   document.getElementById("days-into-flow").value = scenario.days_into_flow;
   document.getElementById("margin").value = 5;
@@ -208,40 +193,28 @@ function loadPreset(key) {
   document.getElementById("telemetry-json").value = jsonStr;
   updateRecordCount();
 
-  // Render info card and oscilloscope
-  renderPresetInfoCard(scenario);
-  renderTrendSparkline(scenario.history);
-}
+  // Update summary strip
+  const descEl = document.getElementById("preset-description");
+  if (descEl) descEl.textContent = scenario.description;
 
-function renderPresetInfoCard(scenario) {
-  const card = document.getElementById("preset-info-card");
-  const badge = document.getElementById("preset-badge");
-  const title = document.getElementById("preset-title");
-  const desc = document.getElementById("preset-description");
-  const chips = document.getElementById("preset-meta-chips");
-
-  card.style.display = "block";
-  badge.textContent = scenario.badge || "Channel";
-  title.textContent = scenario.name;
-  desc.textContent = scenario.description;
-
-  const history = scenario.history || [];
-  let statsHtml = `<span class="chip mono-text">${history.length}d Records</span>`;
-  statsHtml += `<span class="chip mono-text">Inception: Day ${scenario.days_into_flow}</span>`;
-
-  if (history.length > 0) {
-    const validWeights = history.map(h => h.weight).filter(w => w !== null && !isNaN(w));
-    if (validWeights.length >= 2) {
-      const startW = validWeights[0];
-      const endW = validWeights[validWeights.length - 1];
-      const delta = (endW - startW).toFixed(2);
-      const sign = delta >= 0 ? "+" : "";
-      const velocity = (delta / validWeights.length).toFixed(2);
-      statsHtml += `<span class="chip mono-text">${startW}kg &rarr; ${endW}kg (${sign}${delta}kg, ${velocity}kg/d)</span>`;
+  const chipsEl = document.getElementById("preset-meta-chips");
+  if (chipsEl) {
+    const history = scenario.history || [];
+    let chips = `<span class="chip-mini">${history.length}d records</span>`;
+    chips += `<span class="chip-mini">Day ${scenario.days_into_flow} flow</span>`;
+    if (history.length >= 2) {
+      const startW = history[0].weight;
+      const endW = history[history.length - 1].weight;
+      if (startW != null && endW != null) {
+        const delta = (endW - startW).toFixed(1);
+        const sign = delta >= 0 ? "+" : "";
+        chips += `<span class="chip-mini">${sign}${delta}kg net</span>`;
+      }
     }
+    chipsEl.innerHTML = chips;
   }
 
-  chips.innerHTML = statsHtml;
+  renderTrendSparkline(scenario.history);
 }
 
 function resetToCurrentPreset() {
@@ -251,9 +224,7 @@ function resetToCurrentPreset() {
   }
 }
 
-// ==========================================
-// High-Precision Telemetry Reticle (Oscilloscope)
-// ==========================================
+// Oscilloscope Reticle
 function renderTrendSparkline(history) {
   const visualizerCard = document.getElementById("trend-visualizer-card");
   const container = document.getElementById("trend-chart-container");
@@ -302,25 +273,21 @@ function renderTrendSparkline(history) {
 
   currentPointsData = points;
 
-  // Build SVG path
   let pathD = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length; i++) {
     pathD += ` L ${points[i].x} ${points[i].y}`;
   }
 
-  // Build closed area path for gradient fill
   const areaD = `${pathD} L ${points[points.length - 1].x} ${height - 2} L ${points[0].x} ${height - 2} Z`;
 
-  // Get current theme CSS colors
   const rootStyles = getComputedStyle(document.documentElement);
   const chartTrace = rootStyles.getPropertyValue("--chart-trace").trim() || "#f3ba63";
   const chartGlow = rootStyles.getPropertyValue("--chart-glow").trim() || "rgba(243, 186, 99, 0.4)";
   const chartAreaTop = rootStyles.getPropertyValue("--chart-area-top").trim() || "rgba(243, 186, 99, 0.2)";
   const chartAreaBottom = rootStyles.getPropertyValue("--chart-area-bottom").trim() || "rgba(243, 186, 99, 0.0)";
-  const chartReticle = rootStyles.getPropertyValue("--chart-reticle").trim() || "rgba(255, 255, 255, 0.06)";
+  const chartReticle = rootStyles.getPropertyValue("--chart-reticle").trim() || "rgba(255, 255, 255, 0.05)";
   const chartLabel = rootStyles.getPropertyValue("--chart-label").trim() || "#646a7c";
 
-  // Reticle line Y coordinates
   const yMid = padTop + plotH / 2;
   const midW = (minW + rangeW / 2).toFixed(1);
 
@@ -331,12 +298,8 @@ function renderTrendSparkline(history) {
           <stop offset="0%" stop-color="${chartAreaTop}"/>
           <stop offset="100%" stop-color="${chartAreaBottom}"/>
         </linearGradient>
-        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="${chartGlow}"/>
-        </filter>
       </defs>
 
-      <!-- Horizontal Reticle Grid Lines -->
       <line x1="20" y1="${padTop}" x2="${width - 20}" y2="${padTop}" stroke="${chartReticle}" stroke-dasharray="2,3" stroke-width="1"/>
       <text x="22" y="${padTop + 8}" fill="${chartLabel}" font-size="7.5" font-family="JetBrains Mono">${maxW.toFixed(1)}kg</text>
 
@@ -346,17 +309,12 @@ function renderTrendSparkline(history) {
       <line x1="20" y1="${padTop + plotH}" x2="${width - 20}" y2="${padTop + plotH}" stroke="${chartReticle}" stroke-dasharray="2,3" stroke-width="1"/>
       <text x="22" y="${padTop + plotH - 3}" fill="${chartLabel}" font-size="7.5" font-family="JetBrains Mono">${minW.toFixed(1)}kg</text>
 
-      <!-- Gradient Fill Area -->
       <path d="${areaD}" fill="url(#sparkline-grad)"/>
+      <path d="${pathD}" fill="none" stroke="${chartTrace}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 
-      <!-- Glowing Curved Trace -->
-      <path d="${pathD}" fill="none" stroke="${chartTrace}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-filter)"/>
-
-      <!-- Start and Peak Markers -->
       <circle cx="${points[0].x}" cy="${points[0].y}" r="2.5" fill="${chartTrace}"/>
-      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="4" fill="${chartTrace}" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="3.5" fill="${chartTrace}" stroke="#ffffff" stroke-width="1"/>
 
-      <!-- Crosshair tracking elements -->
       <line id="ch-line" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" stroke="${chartTrace}" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
       <circle id="ch-dot" cx="0" cy="0" r="3.5" fill="${chartTrace}" stroke="#ffffff" stroke-width="1.5" opacity="0"/>
     </svg>
@@ -402,7 +360,6 @@ function setupChartHover() {
       chDot.setAttribute("opacity", "1");
     }
 
-    // Position HTML tooltip
     const tooltipX = (closest.x / width) * rect.width;
     const tooltipY = (closest.y / 85) * rect.height;
 
@@ -421,9 +378,6 @@ function setupChartHover() {
   });
 }
 
-// ==========================================
-// Input Mode Switching (Telemetry vs 22 Features)
-// ==========================================
 function switchInputMode(mode) {
   currentInputMode = mode;
   const tabTel = document.getElementById("tab-telemetry");
@@ -483,9 +437,6 @@ function loadSampleFeatureVector() {
   showToast("Loaded 22-dimensional feature schema");
 }
 
-// ==========================================
-// Form Validation & Prediction Execution
-// ==========================================
 function updateRecordCount() {
   const textarea = document.getElementById("telemetry-json");
   if (!textarea) return;
@@ -588,9 +539,8 @@ async function handlePredict(event) {
     };
   }
 
-  // Set loading state
   submitBtn.disabled = true;
-  btnText.textContent = "Computing Forecast...";
+  btnText.textContent = "Forecasting...";
   btnSpinner.style.display = "inline-block";
   const startTime = performance.now();
 
@@ -619,14 +569,13 @@ async function handlePredict(event) {
       
       const confEl = document.getElementById("res-confidence");
       confEl.textContent = result.confidence || "CALIBRATED";
-      confEl.className = `detail-val badge-confidence ${result.confidence === "HIGH" ? "badge-high" : "badge-low"}`;
+      confEl.className = `metric-item-val badge-confidence ${result.confidence === "HIGH" ? "badge-high" : "badge-low"}`;
 
       document.getElementById("res-hive").textContent = result.hiveId || hiveId;
       document.getElementById("res-model").textContent = `${result.model} (${latency}ms)`;
       document.getElementById("res-margin").textContent = `±${margin} Days`;
       document.getElementById("res-note").textContent = result.note || "Continuous bloom monitoring recommended.";
 
-      // Update flow timeline
       const daysIn = payload.days_into_flow || 0;
       const daysRem = pred.expectedHarvestWindowDays;
       const totalDays = Math.max(1, daysIn + daysRem);
@@ -640,22 +589,22 @@ async function handlePredict(event) {
     } else {
       let advice = "";
       if (result.status === "INSUFFICIENT_HISTORY") {
-        advice = "Biological Guard: LightGBM rolling features strictly require >= 6 continuous daily records to guard against mathematical extrapolation artifacts.";
+        advice = "Biological Guard: LightGBM rolling features strictly require >= 6 continuous daily records.";
       } else if (result.status === "INVALID_INPUT") {
-        advice = "Input Guard: Verify that days_into_flow is not negative and that required columns are non-empty.";
+        advice = "Input Guard: Verify that days_into_flow is not negative.";
       }
       showError(
         `Inference Rejected (${result.status || "ERROR"})`,
-        result.message || "Model rejected telemetry data or encountered an unexpected computation error.",
+        result.message || "Model rejected telemetry data.",
         advice
       );
     }
   } catch (err) {
-    showError("Network / API Error", err.message, "Could not communicate with the Python ML microservice.");
+    showError("Network / API Error", err.message, "Could not communicate with the ML microservice.");
     rawBox.textContent = JSON.stringify({ error: err.message }, null, 2);
   } finally {
     submitBtn.disabled = false;
-    btnText.textContent = "Run Harvest Forecast";
+    btnText.textContent = "Generate Forecast";
     btnSpinner.style.display = "none";
   }
 }
@@ -701,7 +650,7 @@ function copyRawJson(event) {
   event.stopPropagation();
   const text = document.getElementById("raw-json").textContent;
   navigator.clipboard.writeText(text).then(() => {
-    showToast("REST payload copied to clipboard");
+    showToast("Payload copied to clipboard");
   }).catch(err => {
     alert("Failed to copy JSON: " + err);
   });
