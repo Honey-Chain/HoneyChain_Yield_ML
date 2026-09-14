@@ -1,3 +1,8 @@
+/**
+ * HoneyChain Yield ML Microservice - Frontend Application Engine
+ * High-performance, anti-slop vanilla JavaScript controller
+ */
+
 let sampleData = {};
 let currentPresetKey = "early_strong_flow";
 let currentCategory = "all";
@@ -9,23 +14,37 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchSampleData();
 
   const textarea = document.getElementById("telemetry-json");
-  textarea.addEventListener("input", updateRecordCount);
+  if (textarea) {
+    textarea.addEventListener("input", updateRecordCount);
+  }
 });
 
 // ==========================================
-// Theme Management
+// Theme Management (Segmented Control)
 // ==========================================
 function initTheme() {
   const savedTheme = localStorage.getItem("honeychain_theme") || "amber";
   changeTheme(savedTheme, false);
-  const select = document.getElementById("theme-select");
-  if (select) select.value = savedTheme;
 }
 
 function changeTheme(themeName, save = true) {
   document.documentElement.setAttribute("data-theme", themeName);
   if (save) {
     localStorage.setItem("honeychain_theme", themeName);
+  }
+
+  // Update segmented control buttons
+  document.querySelectorAll(".theme-pill-btn").forEach(btn => {
+    if (btn.getAttribute("data-theme-val") === themeName) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  // Re-render sparkline to reflect new theme accent colors
+  if (currentPresetKey && sampleData[currentPresetKey]) {
+    renderTrendSparkline(sampleData[currentPresetKey].history);
   }
 }
 
@@ -34,18 +53,19 @@ function changeTheme(themeName, save = true) {
 // ==========================================
 async function checkHealth() {
   const badge = document.getElementById("health-badge");
+  const text = document.getElementById("health-text");
   try {
     const res = await fetch("/health");
     const data = await res.json();
     if (data.status === "healthy" && data.model_loaded) {
-      badge.textContent = `Online • ${data.model_version}`;
+      text.textContent = `Online • ${data.model_version}`;
       badge.className = "header-badge healthy";
     } else {
-      badge.textContent = `Degraded • Model Unloaded`;
+      text.textContent = `Degraded • Model Unloaded`;
       badge.className = "header-badge error";
     }
   } catch (err) {
-    badge.textContent = "Service Offline";
+    text.textContent = "Service Offline";
     badge.className = "header-badge error";
   }
 }
@@ -116,8 +136,9 @@ function loadPreset(key) {
   document.getElementById("telemetry-json").value = jsonStr;
   updateRecordCount();
 
-  // Render info card
+  // Render info card & telemetry sparkline
   renderPresetInfoCard(scenario);
+  renderTrendSparkline(scenario.history);
 }
 
 function renderPresetInfoCard(scenario) {
@@ -143,7 +164,8 @@ function renderPresetInfoCard(scenario) {
       const startW = validWeights[0];
       const endW = validWeights[validWeights.length - 1];
       const delta = (endW - startW).toFixed(2);
-      statsHtml += `<span class="chip">⚖️ ${startW}kg &rarr; ${endW}kg (&Delta;${delta > 0 ? "+" : ""}${delta}kg)</span>`;
+      const sign = delta >= 0 ? "+" : "";
+      statsHtml += `<span class="chip mono-text">⚖️ ${startW}kg &rarr; ${endW}kg (${sign}${delta}kg)</span>`;
     }
   }
 
@@ -157,7 +179,88 @@ function resetToCurrentPreset() {
 }
 
 // ==========================================
-// Input Mode Switching (Telemetry vs Direct Features)
+// SVG Sparkline Trend Chart Generator
+// ==========================================
+function renderTrendSparkline(history) {
+  const visualizerCard = document.getElementById("trend-visualizer-card");
+  const container = document.getElementById("trend-chart-container");
+  const deltaSummary = document.getElementById("trend-delta-summary");
+
+  if (!history || history.length < 2) {
+    visualizerCard.style.display = "none";
+    return;
+  }
+
+  const validPoints = history
+    .map((d, idx) => ({ idx, weight: d.weight, temp: d.temperature, date: d.timestamp }))
+    .filter(d => d.weight !== null && !isNaN(d.weight));
+
+  if (validPoints.length < 2) {
+    visualizerCard.style.display = "none";
+    return;
+  }
+
+  visualizerCard.style.display = "block";
+
+  const weights = validPoints.map(p => p.weight);
+  const minW = Math.min(...weights);
+  const maxW = Math.max(...weights);
+  const rangeW = maxW - minW || 1.0;
+
+  const startW = weights[0];
+  const endW = weights[weights.length - 1];
+  const netDelta = (endW - startW).toFixed(2);
+  const netSign = netDelta >= 0 ? "+" : "";
+  deltaSummary.textContent = `${startW}kg → ${endW}kg (${netSign}${netDelta}kg net)`;
+
+  const width = 460;
+  const height = 75;
+  const padTop = 10;
+  const padBottom = 16;
+  const plotH = height - padTop - padBottom;
+
+  const points = validPoints.map((p, i) => {
+    const x = (i / (validPoints.length - 1)) * (width - 20) + 10;
+    const y = padTop + plotH - ((p.weight - minW) / rangeW) * plotH;
+    return { x, y, weight: p.weight };
+  });
+
+  // Build SVG path
+  let pathD = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    pathD += ` L ${points[i].x} ${points[i].y}`;
+  }
+
+  // Build closed area path for gradient fill
+  const areaD = `${pathD} L ${points[points.length - 1].x} ${height - 2} L ${points[0].x} ${height - 2} Z`;
+
+  // Get current theme CSS colors
+  const rootStyles = getComputedStyle(document.documentElement);
+  const chartLine = rootStyles.getPropertyValue("--chart-line").trim() || "#d97706";
+  const chartGradTop = rootStyles.getPropertyValue("--chart-gradient-top").trim() || "rgba(217, 119, 6, 0.25)";
+  const chartGradBottom = rootStyles.getPropertyValue("--chart-gradient-bottom").trim() || "rgba(217, 119, 6, 0.0)";
+
+  const svgHtml = `
+    <svg viewBox="0 0 ${width} ${height}" class="sparkline-svg" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="sparkline-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="${chartGradTop}"/>
+          <stop offset="100%" stop-color="${chartGradBottom}"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#sparkline-grad)"/>
+      <path d="${pathD}" fill="none" stroke="${chartLine}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Start and End Point Markers -->
+      <circle cx="${points[0].x}" cy="${points[0].y}" r="3.5" fill="${chartLine}"/>
+      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="4.5" fill="${chartLine}" stroke="#ffffff" stroke-width="1.5"/>
+    </svg>
+  `;
+
+  container.innerHTML = svgHtml;
+}
+
+// ==========================================
+// Input Mode Switching (Telemetry vs 22 Features)
 // ==========================================
 function switchInputMode(mode) {
   currentInputMode = mode;
@@ -169,13 +272,17 @@ function switchInputMode(mode) {
 
   if (mode === "telemetry") {
     tabTel.classList.add("active");
+    tabTel.setAttribute("aria-selected", "true");
     tabFeat.classList.remove("active");
+    tabFeat.setAttribute("aria-selected", "false");
     containerTel.style.display = "block";
     containerFeat.style.display = "none";
     flowDaysGroup.style.display = "flex";
   } else {
     tabTel.classList.remove("active");
+    tabTel.setAttribute("aria-selected", "false");
     tabFeat.classList.add("active");
+    tabFeat.setAttribute("aria-selected", "true");
     containerTel.style.display = "none";
     containerFeat.style.display = "block";
     flowDaysGroup.style.display = "none";
@@ -214,11 +321,14 @@ function loadSampleFeatureVector() {
 }
 
 // ==========================================
-// Form Validation & Execution
+// Form Validation & Prediction Execution
 // ==========================================
 function updateRecordCount() {
-  const text = document.getElementById("telemetry-json").value.trim();
+  const textarea = document.getElementById("telemetry-json");
+  if (!textarea) return;
+  const text = textarea.value.trim();
   const countBadge = document.getElementById("record-count");
+
   try {
     const parsed = JSON.parse(text);
     if (Array.isArray(parsed)) {
@@ -233,6 +343,7 @@ function updateRecordCount() {
         countBadge.style.background = "var(--success-bg)";
         countBadge.style.color = "var(--success)";
       }
+      renderTrendSparkline(parsed);
       return;
     }
   } catch (e) {
@@ -266,6 +377,7 @@ async function handlePredict(event) {
   const errorBanner = document.getElementById("result-error");
   const successCard = document.getElementById("result-success");
   const rawBox = document.getElementById("raw-json");
+  const statusPill = document.getElementById("res-status-pill");
 
   const hiveId = document.getElementById("hive-id").value.trim();
   const margin = parseInt(document.getElementById("margin").value, 10);
@@ -332,6 +444,9 @@ async function handlePredict(event) {
       errorBanner.style.display = "none";
       successCard.style.display = "block";
 
+      statusPill.textContent = "Status: OK";
+      statusPill.className = "status-pill status-ok";
+
       const pred = result.prediction;
       document.getElementById("res-range").textContent = pred.harvestWindowRange;
       document.getElementById("res-days").textContent = `${pred.expectedHarvestWindowDays} days`;
@@ -339,31 +454,28 @@ async function handlePredict(event) {
       document.getElementById("res-hive").textContent = result.hiveId || hiveId;
       document.getElementById("res-model").textContent = result.model;
       document.getElementById("res-margin").textContent = `±${margin} Days`;
-      document.getElementById("res-timestamp").textContent = result.timestamp
-        ? new Date(result.timestamp).toLocaleTimeString()
-        : "Just Now";
       document.getElementById("res-note").textContent = result.note || "Monitor flow developments daily.";
 
-      // Update timeline visualization
+      // Update flow timeline
       const daysIn = payload.days_into_flow || 0;
       const daysRem = pred.expectedHarvestWindowDays;
       const totalDays = Math.max(1, daysIn + daysRem);
       const progressPercent = Math.min(100, Math.round((daysIn / totalDays) * 100));
 
-      document.getElementById("timeline-current-label").textContent = `Current: Day ${daysIn}`;
+      document.getElementById("timeline-current-label").textContent = `Day ${daysIn}`;
       document.getElementById("timeline-end-label").textContent = `Est. Total: ${totalDays}d`;
       document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
 
     } else {
       let advice = "";
       if (result.status === "INSUFFICIENT_HISTORY") {
-        advice = "💡 Biological Constraint: The LightGBM feature pipeline computes 3-day, 7-day, and 14-day rolling dynamics and requires a strict minimum of 6 continuous daily records. Please provide more telemetry.";
+        advice = "Biological Guard: LightGBM rolling windows require at least 6 continuous daily records. Cold starts with <6 days fail gracefully to protect against invalid extrapolation.";
       } else if (result.status === "INVALID_INPUT") {
-        advice = "💡 Input Guard: Verify that days_into_flow is not negative and that all required columns are present.";
+        advice = "Input Guard: Verify that days_into_flow is not negative and that all required columns are supplied.";
       }
       showError(
-        `Prediction Rejected (${result.status || "ERROR"})`,
-        result.message || "Model rejected telemetry data or encountered an unexpected error.",
+        `Inference Rejected (${result.status || "ERROR"})`,
+        result.message || "Model rejected telemetry data or encountered an unexpected computation error.",
         advice
       );
     }
@@ -382,10 +494,14 @@ function showError(title, message, advice = "") {
   const errorBanner = document.getElementById("result-error");
   const successCard = document.getElementById("result-success");
   const adviceEl = document.getElementById("error-advice");
+  const statusPill = document.getElementById("res-status-pill");
 
   placeholder.style.display = "none";
   successCard.style.display = "none";
   errorBanner.style.display = "block";
+
+  statusPill.textContent = "Status: Alert";
+  statusPill.className = "status-pill status-ready";
 
   document.getElementById("error-title").textContent = title;
   document.getElementById("error-message").textContent = message;
@@ -413,11 +529,11 @@ function toggleRaw() {
 function copyRawJson(event) {
   event.stopPropagation();
   const text = document.getElementById("raw-json").textContent;
-  const btn = event.target;
+  const copyText = document.getElementById("copy-text");
+
   navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
-    btn.textContent = "Copied!";
-    setTimeout(() => { btn.textContent = orig; }, 1500);
+    copyText.textContent = "Copied!";
+    setTimeout(() => { copyText.textContent = "Copy"; }, 1500);
   }).catch(err => {
     alert("Failed to copy JSON: " + err);
   });
