@@ -6,7 +6,7 @@
   <title>HoneyChain &bull; Yield Production ML Microservice</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -15,11 +15,11 @@
   <div class="ambient-glow glow-2"></div>
 
   <div class="container">
-    <!-- Floating Top Island Header -->
+    <!-- Laboratory Top Bar Header -->
     <header class="header">
       <div class="logo-area">
         <div class="logo-mark">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </div>
@@ -28,40 +28,40 @@
             <h1>HoneyChain Yield ML Service</h1>
             <span class="version-tag">v1.0.0</span>
           </div>
-          <p class="subtitle">Apiary Harvest Window Prediction &bull; <span class="mono-text" id="model-tag">yield-production-v1</span></p>
+          <p class="subtitle">Autonomous Apiary Harvest Engine &bull; <span class="mono-text" id="model-tag">yield-production-v1</span></p>
         </div>
       </div>
 
       <div class="header-controls">
+        <!-- Live UTC Clock -->
+        <span class="clock-pill mono-text" id="utc-clock">00:00:00 UTC</span>
+
         <!-- Theme Selector Segmented Control -->
-        <div class="theme-control-group">
-          <span class="control-label">Theme</span>
-          <div class="theme-pill-group">
-            <button type="button" class="theme-pill-btn active" data-theme-val="amber" onclick="changeTheme('amber')" title="Obsidian Honey">
-              <span class="theme-dot dot-amber"></span>
-              <span class="theme-name">Amber</span>
-            </button>
-            <button type="button" class="theme-pill-btn" data-theme-val="dark" onclick="changeTheme('dark')" title="Darkmatter Charcoal">
-              <span class="theme-dot dot-dark"></span>
-              <span class="theme-name">Dark</span>
-            </button>
-            <button type="button" class="theme-pill-btn" data-theme-val="forest" onclick="changeTheme('forest')" title="Botanical Sage">
-              <span class="theme-dot dot-forest"></span>
-              <span class="theme-name">Sage</span>
-            </button>
-            <button type="button" class="theme-pill-btn" data-theme-val="tech" onclick="changeTheme('tech')" title="Cyber Slate">
-              <span class="theme-dot dot-tech"></span>
-              <span class="theme-name">Slate</span>
-            </button>
-          </div>
+        <div class="theme-pill-group">
+          <button type="button" class="theme-pill-btn active" data-theme-val="amber" onclick="changeTheme('amber')" title="Champagne Amber">
+            <span class="theme-dot dot-amber"></span>
+            <span class="theme-name">Amber</span>
+          </button>
+          <button type="button" class="theme-pill-btn" data-theme-val="dark" onclick="changeTheme('dark')" title="Darkmatter Copper">
+            <span class="theme-dot dot-dark"></span>
+            <span class="theme-name">Dark</span>
+          </button>
+          <button type="button" class="theme-pill-btn" data-theme-val="forest" onclick="changeTheme('forest')" title="Botanical Sage">
+            <span class="theme-dot dot-forest"></span>
+            <span class="theme-name">Sage</span>
+          </button>
+          <button type="button" class="theme-pill-btn" data-theme-val="tech" onclick="changeTheme('tech')" title="Cyber Slate">
+            <span class="theme-dot dot-tech"></span>
+            <span class="theme-name">Slate</span>
+          </button>
         </div>
 
         <!-- Mode Toggle (Dark / Light) -->
-        <button type="button" id="mode-toggle" class="mode-toggle-btn" onclick="toggleColorMode()" title="Toggle Dark / Light Mode" aria-label="Toggle visual mode">
-          <svg id="mode-icon-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <button type="button" id="mode-toggle" class="mode-toggle-btn" onclick="toggleColorMode()" title="Toggle Visual Mode" aria-label="Toggle visual mode">
+          <svg id="mode-icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
-          <svg id="mode-icon-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg id="mode-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/>
             <line x1="12" y1="1" x2="12" y2="3"/>
             <line x1="12" y1="21" x2="12" y2="23"/>
@@ -84,13 +84,13 @@
 
     <!-- Main Workspace Grid -->
     <main class="content-grid">
-      <!-- Left Column: Inputs & Scenarios (Double Bezel Container) -->
-      <section class="card-shell" aria-labelledby="input-heading">
-        <div class="card-core">
+      <!-- Left Column: Inputs & Scenarios (Milled Tray) -->
+      <section class="card-tray" aria-labelledby="input-heading">
+        <div class="card-panel">
           <div class="card-header-flex">
             <div>
-              <span class="eyebrow-badge">TELEMETRY INGESTION</span>
-              <h2 id="input-heading">Biological Inputs &amp; Scenarios</h2>
+              <span class="eyebrow-badge">TELEMETRY INGESTION CONSOLE</span>
+              <h2 id="input-heading" class="serif-display">Biological Inputs &amp; Diagnostic Channels</h2>
             </div>
             <!-- Mode Switcher -->
             <div class="input-mode-toggle" role="tablist">
@@ -102,15 +102,15 @@
               </button>
             </div>
           </div>
-          <p class="section-desc">Select an apiary condition preset or inject custom multi-day telemetry.</p>
+          <p class="section-desc">Select an apiary channel condition or inject custom time-series telemetry.</p>
 
-          <!-- Preset Scenarios Section -->
+          <!-- Diagnostic Channel Matrix -->
           <div class="preset-section">
             <div class="category-tabs" role="tablist">
-              <button type="button" class="cat-pill active" onclick="filterCategory('all', this)">All Scenarios (10)</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('flow_phases', this)">Flow Dynamics</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('environmental', this)">Environmental Stress</button>
-              <button type="button" class="cat-pill" onclick="filterCategory('edge_cases', this)">Diagnostic Edge Cases</button>
+              <button type="button" class="cat-pill active" onclick="filterCategory('all', this)">All Channels (10)</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('flow_phases', this)">Bank A &bull; Flow Dynamics</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('environmental', this)">Bank B &bull; Climate Stress</button>
+              <button type="button" class="cat-pill" onclick="filterCategory('edge_cases', this)">Bank C &bull; Diagnostic Guards</button>
             </div>
 
             <!-- Preset Cards Grid -->
@@ -121,7 +121,7 @@
             <!-- Active Scenario Meta Card -->
             <div class="preset-info-card" id="preset-info-card" style="display: none;">
               <div class="preset-info-top">
-                <span class="preset-badge" id="preset-badge">Surge</span>
+                <span class="preset-badge" id="preset-badge">Channel 01</span>
                 <strong id="preset-title">Scenario Name</strong>
               </div>
               <p id="preset-description" class="preset-desc-text"></p>
@@ -139,7 +139,7 @@
               <div class="form-group" id="flow-days-group">
                 <label for="days-into-flow">Days Into Flow</label>
                 <input type="number" id="days-into-flow" class="input mono-text" value="14" min="0" required />
-                <span class="help-text">Days since 7d gain &ge; 0.20 kg/d</span>
+                <span class="help-text">Threshold: 7d gain &ge; 0.20 kg/d</span>
               </div>
               <div class="form-group">
                 <label for="margin">Error Margin (&plusmn; Days)</label>
@@ -157,7 +157,7 @@
                   </div>
                 </div>
                 <div class="textarea-shell">
-                  <textarea id="telemetry-json" class="textarea mono-text" rows="9" spellcheck="false" required></textarea>
+                  <textarea id="telemetry-json" class="textarea mono-text" rows="8" spellcheck="false" required></textarea>
                 </div>
                 <span class="help-text">Columns: timestamp, weight (kg), temperature (&deg;C), humidity (%), flow. Hard min 6 continuous days, 14+ recommended.</span>
               </div>
@@ -170,11 +170,11 @@
                   <label for="features-json">22-Dimensional Feature Vector (JSON Map)</label>
                   <button type="button" class="btn-text-action" onclick="loadSampleFeatureVector()">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    <span>Load 22-D Vector</span>
+                    <span>Load 22-D Schema</span>
                   </button>
                 </div>
                 <div class="textarea-shell">
-                  <textarea id="features-json" class="textarea mono-text" rows="9" spellcheck="false"></textarea>
+                  <textarea id="features-json" class="textarea mono-text" rows="8" spellcheck="false"></textarea>
                 </div>
                 <span class="help-text">Requires exact 22 pre-computed features specified in feature_config.json.</span>
               </div>
@@ -184,7 +184,7 @@
             <div class="form-actions">
               <button type="submit" id="submit-btn" class="btn btn-primary">
                 <span id="btn-text">Run Harvest Forecast</span>
-                <span class="shortcut-badge mono-text">⌘↵</span>
+                <span class="kbd-badge mono-text">&#8984;&#9166;</span>
                 <div class="btn-icon-circle">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -206,26 +206,26 @@
         </div>
       </section>
 
-      <!-- Right Column: Inference Result & Dashboard (Double Bezel Container) -->
-      <section class="card-shell result-shell" aria-labelledby="result-heading">
-        <div class="card-core">
+      <!-- Right Column: Chronometer & Oscilloscope (Milled Tray) -->
+      <section class="card-tray result-shell" aria-labelledby="result-heading">
+        <div class="card-panel">
           <div class="result-header-area">
             <div>
-              <span class="eyebrow-badge">MODEL INFERENCE</span>
-              <h2 id="result-heading">Harvest Forecast Dashboard</h2>
+              <span class="eyebrow-badge">CHRONOMETRIC FORECAST INSTRUMENT</span>
+              <h2 id="result-heading" class="serif-display">Harvest Window Observatory</h2>
             </div>
             <div class="status-indicator-wrap" id="status-wrap">
               <span class="status-pill status-ready" id="res-status-pill">Ready</span>
             </div>
           </div>
-          <p class="section-desc">Real-time biological inference with error margins and telemetry trends.</p>
+          <p class="section-desc">Real-time biological inference with error margins and telemetry velocity.</p>
 
-          <!-- Telemetry Trend Sparkline / Oscilloscope Card -->
+          <!-- Telemetry Trend Oscilloscope Card -->
           <div class="trend-visualizer-card" id="trend-visualizer-card" style="display: none;">
             <div class="trend-header">
               <div class="trend-title-area">
                 <svg class="oscilloscope-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                <span class="trend-title">Telemetry Oscilloscope</span>
+                <span class="trend-title">Biomass Velocity Reticle</span>
               </div>
               <span class="trend-meta mono-text" id="trend-delta-summary">--</span>
             </div>
@@ -238,13 +238,13 @@
           <!-- Initial Empty State -->
           <div id="result-placeholder" class="placeholder-state">
             <div class="placeholder-icon-wrap">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <polyline points="12 6 12 12 16 14"></polyline>
               </svg>
             </div>
-            <h3>Awaiting Telemetry Ingestion</h3>
-            <p>Select any scenario preset on the left or run custom telemetry to compute an automated harvest forecast.</p>
+            <h3 class="serif-display">Awaiting Telemetry Stream</h3>
+            <p>Select any diagnostic channel on the left or execute custom telemetry to generate a calibrated harvest window forecast.</p>
           </div>
 
           <!-- Error Alert Banner -->
@@ -267,13 +267,13 @@
                 <span class="metric-label">Recommended Harvest Window</span>
                 <span class="metric-badge-live mono-text">CALIBRATED</span>
               </div>
-              <div class="metric-range mono-text" id="res-range">--</div>
+              <div class="metric-range mono-text serif-display" id="res-range">--</div>
               <div class="metric-sub">Expected Point Estimate: <strong class="mono-text" id="res-days">--</strong> remaining</div>
               
               <!-- Flow Timeline Visualizer -->
               <div class="flow-timeline">
                 <div class="timeline-labels">
-                  <span>Flow Start</span>
+                  <span>Flow Inception</span>
                   <span id="timeline-current-label" class="mono-text">Day 14</span>
                   <span id="timeline-end-label" class="mono-text">Est. Total: 23d</span>
                 </div>
@@ -286,7 +286,7 @@
             <!-- Detail Grid (Tabular Numbers) -->
             <div class="detail-grid">
               <div class="detail-item">
-                <span class="detail-label">Confidence Rating</span>
+                <span class="detail-label">Confidence Index</span>
                 <span class="detail-val badge-confidence badge-low" id="res-confidence">LOW</span>
               </div>
               <div class="detail-item">
@@ -294,7 +294,7 @@
                 <span class="detail-val mono-text" id="res-hive">--</span>
               </div>
               <div class="detail-item">
-                <span class="detail-label">Model Architecture</span>
+                <span class="detail-label">Engine Architecture</span>
                 <span class="detail-val mono-text" id="res-model">LightGBM v1</span>
               </div>
               <div class="detail-item">
@@ -307,7 +307,7 @@
             <div class="advisory-box">
               <div class="advisory-header">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                <strong>Biological &amp; Apiary Guidance</strong>
+                <strong>Archival Field Dispatch &bull; Apiary Guidance</strong>
               </div>
               <p id="res-note"></p>
             </div>
@@ -318,7 +318,7 @@
             <div class="raw-header" onclick="toggleRaw()">
               <div class="raw-title-flex">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                <span>REST Response Payload</span>
+                <span>REST Protocol Payload</span>
               </div>
               <div class="raw-actions">
                 <button type="button" class="btn-copy" onclick="copyRawJson(event)">
@@ -334,12 +334,12 @@
       </section>
     </main>
 
-    <!-- Footer -->
+    <!-- Archival Footer -->
     <footer class="footer">
       <div class="footer-content">
         <p>HoneyChain Decentralized Intelligence Platform &bull; Yield Production ML Microservice</p>
         <div class="footer-links">
-          <a href="/docs" target="_blank">OpenAPI Docs</a>
+          <a href="/docs" target="_blank">OpenAPI Protocol</a>
           <span class="link-sep">&bull;</span>
           <a href="/model-info" target="_blank">Model Specifications</a>
           <span class="link-sep">&bull;</span>

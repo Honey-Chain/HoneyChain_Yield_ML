@@ -1,7 +1,6 @@
 /**
- * HoneyChain Yield ML Microservice - Sleek & Premium Application Controller
- * High-performance, anti-slop vanilla JavaScript engine
- * Features: Telemetry Oscilloscope, Hardware State Controls, Micro-Interactions
+ * HoneyChain Yield ML Microservice - Museum-Grade Apiary Laboratory Engine
+ * Controller: Telemetry Oscilloscope with Reticle, UTC Clock, Micro-Interactions
  */
 
 let sampleData = {};
@@ -13,6 +12,7 @@ let currentPointsData = []; // Cached points for oscilloscope hover tracking
 document.addEventListener("DOMContentLoaded", () => {
   initVisualMode();
   initTheme();
+  initUtcClock();
   checkHealth();
   fetchSampleData();
 
@@ -35,6 +35,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Setup interactive hover tracking for the oscilloscope
   setupChartHover();
 });
+
+// ==========================================
+// Live UTC Clock
+// ==========================================
+function initUtcClock() {
+  const clockEl = document.getElementById("utc-clock");
+  if (!clockEl) return;
+
+  function update() {
+    const now = new Date();
+    const h = String(now.getUTCHours()).padStart(2, "0");
+    const m = String(now.getUTCMinutes()).padStart(2, "0");
+    const s = String(now.getUTCSeconds()).padStart(2, "0");
+    clockEl.textContent = `${h}:${m}:${s} UTC`;
+  }
+
+  update();
+  setInterval(update, 1000);
+}
 
 // ==========================================
 // Theme & Visual Mode Management
@@ -74,7 +93,7 @@ function toggleColorMode() {
   const current = document.documentElement.getAttribute("data-mode") || "dark";
   const next = current === "dark" ? "light" : "dark";
   setColorMode(next, true);
-  showToast(`Switched to ${next === "dark" ? "Obsidian Dark" : "Alabaster Light"} mode`);
+  showToast(`Switched to ${next === "dark" ? "Titanium Obsidian" : "Museum Alabaster"} mode`);
 }
 
 function changeTheme(themeName, save = true) {
@@ -147,11 +166,13 @@ function renderPresetButtons(category) {
 
   container.innerHTML = "";
 
+  let idx = 1;
   Object.entries(sampleData).forEach(([key, item]) => {
     if (category !== "all" && item.category !== category) {
       return;
     }
 
+    const channelNum = String(idx).padStart(2, "0");
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `btn-preset-card ${key === currentPresetKey ? "active" : ""}`;
@@ -159,11 +180,12 @@ function renderPresetButtons(category) {
     btn.onclick = () => loadPreset(key);
 
     btn.innerHTML = `
-      <span class="preset-card-tag">${item.badge || "Preset"}</span>
+      <span class="preset-card-tag">CH ${channelNum} &bull; ${item.badge || "Preset"}</span>
       <span class="preset-card-title">${item.name}</span>
     `;
 
     container.appendChild(btn);
+    idx++;
   });
 }
 
@@ -199,13 +221,13 @@ function renderPresetInfoCard(scenario) {
   const chips = document.getElementById("preset-meta-chips");
 
   card.style.display = "block";
-  badge.textContent = scenario.badge || "Preset";
+  badge.textContent = scenario.badge || "Channel";
   title.textContent = scenario.name;
   desc.textContent = scenario.description;
 
   const history = scenario.history || [];
-  let statsHtml = `<span class="chip mono-text">${history.length}d Telemetry</span>`;
-  statsHtml += `<span class="chip mono-text">Flow Inception: Day ${scenario.days_into_flow}</span>`;
+  let statsHtml = `<span class="chip mono-text">${history.length}d Records</span>`;
+  statsHtml += `<span class="chip mono-text">Inception: Day ${scenario.days_into_flow}</span>`;
 
   if (history.length > 0) {
     const validWeights = history.map(h => h.weight).filter(w => w !== null && !isNaN(w));
@@ -214,7 +236,8 @@ function renderPresetInfoCard(scenario) {
       const endW = validWeights[validWeights.length - 1];
       const delta = (endW - startW).toFixed(2);
       const sign = delta >= 0 ? "+" : "";
-      statsHtml += `<span class="chip mono-text">${startW}kg &rarr; ${endW}kg (${sign}${delta}kg)</span>`;
+      const velocity = (delta / validWeights.length).toFixed(2);
+      statsHtml += `<span class="chip mono-text">${startW}kg &rarr; ${endW}kg (${sign}${delta}kg, ${velocity}kg/d)</span>`;
     }
   }
 
@@ -224,12 +247,12 @@ function renderPresetInfoCard(scenario) {
 function resetToCurrentPreset() {
   if (currentPresetKey && sampleData[currentPresetKey]) {
     loadPreset(currentPresetKey);
-    showToast("Reset to active scenario defaults");
+    showToast("Reset to channel default values");
   }
 }
 
 // ==========================================
-// High-Precision Telemetry Oscilloscope
+// High-Precision Telemetry Reticle (Oscilloscope)
 // ==========================================
 function renderTrendSparkline(history) {
   const visualizerCard = document.getElementById("trend-visualizer-card");
@@ -266,8 +289,8 @@ function renderTrendSparkline(history) {
   deltaSummary.textContent = `${startW.toFixed(1)}kg → ${endW.toFixed(1)}kg (${netSign}${netDelta}kg net)`;
 
   const width = 520;
-  const height = 90;
-  const padTop = 14;
+  const height = 85;
+  const padTop = 12;
   const padBottom = 16;
   const plotH = height - padTop - padBottom;
 
@@ -290,14 +313,14 @@ function renderTrendSparkline(history) {
 
   // Get current theme CSS colors
   const rootStyles = getComputedStyle(document.documentElement);
-  const chartLine = rootStyles.getPropertyValue("--chart-line").trim() || "#f59e0b";
-  const chartGlow = rootStyles.getPropertyValue("--chart-glow").trim() || "rgba(245, 158, 11, 0.4)";
-  const chartGradTop = rootStyles.getPropertyValue("--chart-gradient-top").trim() || "rgba(245, 158, 11, 0.24)";
-  const chartGradBottom = rootStyles.getPropertyValue("--chart-gradient-bottom").trim() || "rgba(245, 158, 11, 0.0)";
-  const chartGrid = rootStyles.getPropertyValue("--chart-grid").trim() || "rgba(255, 255, 255, 0.05)";
-  const chartText = rootStyles.getPropertyValue("--chart-text").trim() || "#6b7280";
+  const chartTrace = rootStyles.getPropertyValue("--chart-trace").trim() || "#f3ba63";
+  const chartGlow = rootStyles.getPropertyValue("--chart-glow").trim() || "rgba(243, 186, 99, 0.4)";
+  const chartAreaTop = rootStyles.getPropertyValue("--chart-area-top").trim() || "rgba(243, 186, 99, 0.2)";
+  const chartAreaBottom = rootStyles.getPropertyValue("--chart-area-bottom").trim() || "rgba(243, 186, 99, 0.0)";
+  const chartReticle = rootStyles.getPropertyValue("--chart-reticle").trim() || "rgba(255, 255, 255, 0.06)";
+  const chartLabel = rootStyles.getPropertyValue("--chart-label").trim() || "#646a7c";
 
-  // Grid line Y coordinates
+  // Reticle line Y coordinates
   const yMid = padTop + plotH / 2;
   const midW = (minW + rangeW / 2).toFixed(1);
 
@@ -305,37 +328,37 @@ function renderTrendSparkline(history) {
     <svg viewBox="0 0 ${width} ${height}" class="sparkline-svg" preserveAspectRatio="none" id="oscilloscope-svg">
       <defs>
         <linearGradient id="sparkline-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="${chartGradTop}"/>
-          <stop offset="100%" stop-color="${chartGradBottom}"/>
+          <stop offset="0%" stop-color="${chartAreaTop}"/>
+          <stop offset="100%" stop-color="${chartAreaBottom}"/>
         </linearGradient>
         <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="${chartGlow}"/>
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="${chartGlow}"/>
         </filter>
       </defs>
 
-      <!-- Horizontal Grid Lines -->
-      <line x1="20" y1="${padTop}" x2="${width - 20}" y2="${padTop}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
-      <text x="22" y="${padTop + 9}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${maxW.toFixed(1)}kg</text>
+      <!-- Horizontal Reticle Grid Lines -->
+      <line x1="20" y1="${padTop}" x2="${width - 20}" y2="${padTop}" stroke="${chartReticle}" stroke-dasharray="2,3" stroke-width="1"/>
+      <text x="22" y="${padTop + 8}" fill="${chartLabel}" font-size="7.5" font-family="JetBrains Mono">${maxW.toFixed(1)}kg</text>
 
-      <line x1="20" y1="${yMid}" x2="${width - 20}" y2="${yMid}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
-      <text x="22" y="${yMid + 9}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${midW}kg</text>
+      <line x1="20" y1="${yMid}" x2="${width - 20}" y2="${yMid}" stroke="${chartReticle}" stroke-dasharray="2,3" stroke-width="1"/>
+      <text x="22" y="${yMid + 8}" fill="${chartLabel}" font-size="7.5" font-family="JetBrains Mono">${midW}kg</text>
 
-      <line x1="20" y1="${padTop + plotH}" x2="${width - 20}" y2="${padTop + plotH}" stroke="${chartGrid}" stroke-dasharray="3,3" stroke-width="1"/>
-      <text x="22" y="${padTop + plotH - 3}" fill="${chartText}" font-size="8" font-family="JetBrains Mono">${minW.toFixed(1)}kg</text>
+      <line x1="20" y1="${padTop + plotH}" x2="${width - 20}" y2="${padTop + plotH}" stroke="${chartReticle}" stroke-dasharray="2,3" stroke-width="1"/>
+      <text x="22" y="${padTop + plotH - 3}" fill="${chartLabel}" font-size="7.5" font-family="JetBrains Mono">${minW.toFixed(1)}kg</text>
 
-      <!-- Gradient Area -->
+      <!-- Gradient Fill Area -->
       <path d="${areaD}" fill="url(#sparkline-grad)"/>
 
       <!-- Glowing Curved Trace -->
-      <path d="${pathD}" fill="none" stroke="${chartLine}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-filter)"/>
+      <path d="${pathD}" fill="none" stroke="${chartTrace}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow-filter)"/>
 
       <!-- Start and Peak Markers -->
-      <circle cx="${points[0].x}" cy="${points[0].y}" r="3" fill="${chartLine}"/>
-      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="4.5" fill="${chartLine}" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="${points[0].x}" cy="${points[0].y}" r="2.5" fill="${chartTrace}"/>
+      <circle cx="${points[points.length - 1].x}" cy="${points[points.length - 1].y}" r="4" fill="${chartTrace}" stroke="#ffffff" stroke-width="1.5"/>
 
-      <!-- Crosshair tracking elements (initially hidden) -->
-      <line id="ch-line" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" stroke="${chartLine}" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
-      <circle id="ch-dot" cx="0" cy="0" r="4" fill="${chartLine}" stroke="#ffffff" stroke-width="1.5" opacity="0"/>
+      <!-- Crosshair tracking elements -->
+      <line id="ch-line" x1="0" y1="${padTop}" x2="0" y2="${padTop + plotH}" stroke="${chartTrace}" stroke-width="1" stroke-dasharray="2,2" opacity="0"/>
+      <circle id="ch-dot" cx="0" cy="0" r="3.5" fill="${chartTrace}" stroke="#ffffff" stroke-width="1.5" opacity="0"/>
     </svg>
   `;
 
@@ -354,7 +377,6 @@ function setupChartHover() {
     const mouseX = e.clientX - rect.left;
     const relX = mouseX / rect.width;
 
-    // Find closest point
     const width = 520;
     const targetSvgX = relX * width;
 
@@ -382,12 +404,12 @@ function setupChartHover() {
 
     // Position HTML tooltip
     const tooltipX = (closest.x / width) * rect.width;
-    const tooltipY = (closest.y / 90) * rect.height;
+    const tooltipY = (closest.y / 85) * rect.height;
 
     tooltip.style.display = "block";
     tooltip.style.left = `${tooltipX}px`;
     tooltip.style.top = `${tooltipY}px`;
-    tooltip.innerHTML = `Day ${closest.day}: <strong>${closest.weight.toFixed(2)} kg</strong>${closest.temp ? ` • ${closest.temp}°C` : ""}`;
+    tooltip.innerHTML = `Day ${closest.day}: <strong>${closest.weight.toFixed(2)} kg</strong>${closest.temp ? ` &bull; ${closest.temp}°C` : ""}`;
   });
 
   container.addEventListener("mouseleave", () => {
@@ -588,7 +610,7 @@ async function handlePredict(event) {
       errorBanner.style.display = "none";
       successCard.style.display = "block";
 
-      statusPill.textContent = "Forecast Complete";
+      statusPill.textContent = "Calibrated";
       statusPill.className = "status-pill status-ok";
 
       const pred = result.prediction;
@@ -679,7 +701,7 @@ function copyRawJson(event) {
   event.stopPropagation();
   const text = document.getElementById("raw-json").textContent;
   navigator.clipboard.writeText(text).then(() => {
-    showToast("JSON payload copied to clipboard");
+    showToast("REST payload copied to clipboard");
   }).catch(err => {
     alert("Failed to copy JSON: " + err);
   });
@@ -694,14 +716,14 @@ function showToast(message, isError = false) {
   if (isError) toast.style.borderColor = "var(--danger-border)";
 
   toast.innerHTML = `
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${isError ? 'var(--danger)' : 'var(--primary)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${isError ? 'var(--danger)' : 'var(--primary)'}" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
     <span>${message}</span>
   `;
 
   container.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = "0";
-    toast.style.transform = "translateY(10px) scale(0.95)";
+    toast.style.transform = "translateY(8px) scale(0.96)";
     setTimeout(() => toast.remove(), 250);
   }, 2400);
 }
