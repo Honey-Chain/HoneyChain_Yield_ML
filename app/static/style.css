@@ -1,6 +1,6 @@
 /* ==========================================================================
-   HoneyChain Yield ML Microservice - Calm & Spacious Museum Laboratory
-   Decluttered, airy, high-end editorial interface
+   HoneyChain Yield ML Microservice - Immersive Apiary Observatory
+   Living scientific atmosphere: Ambient pollen canvas, laser reticle, comb core
    Instrument Serif × Plus Jakarta Sans × JetBrains Mono
    ========================================================================== */
 
@@ -10,13 +10,14 @@
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
   --radius-panel: 16px;
   --radius-pill: 9999px;
   --radius-sm: 8px;
   --radius-xs: 5px;
 }
 
-/* Base Dark: Titanium Obsidian (Flagship) */
+/* Base Dark: Titanium Obsidian (Flagship Default) */
 :root,
 [data-mode="dark"],
 [data-theme="amber"][data-mode="dark"] {
@@ -30,7 +31,7 @@
   --border-subtle: rgba(255, 255, 255, 0.04);
   --border-focus: #f3ba63;
 
-  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+  --card-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
 
   --text-main: #f5f5f7;
   --text-muted: #8c93a4;
@@ -38,7 +39,7 @@
 
   --primary: #f3ba63;
   --primary-hover: #dfa349;
-  --primary-glow: rgba(243, 186, 99, 0.2);
+  --primary-glow: rgba(243, 186, 99, 0.25);
   --primary-soft: rgba(243, 186, 99, 0.1);
   --primary-border: rgba(243, 186, 99, 0.3);
   --primary-foreground: #090a0d;
@@ -52,14 +53,15 @@
   --danger-border: rgba(244, 63, 94, 0.3);
 
   --chart-trace: #f3ba63;
-  --chart-glow: rgba(243, 186, 99, 0.35);
-  --chart-area-top: rgba(243, 186, 99, 0.18);
+  --chart-glow: rgba(243, 186, 99, 0.4);
+  --chart-area-top: rgba(243, 186, 99, 0.2);
   --chart-area-bottom: rgba(243, 186, 99, 0.0);
   --chart-reticle: rgba(255, 255, 255, 0.05);
   --chart-label: #646a7c;
 
-  --ambient-1: rgba(243, 186, 99, 0.06);
-  --ambient-2: rgba(217, 119, 6, 0.03);
+  --particle-rgb: 243, 186, 99;
+  --ambient-1: rgba(243, 186, 99, 0.07);
+  --ambient-2: rgba(217, 119, 6, 0.04);
 }
 
 /* Light Mode: Museum Alabaster Ivory */
@@ -74,7 +76,7 @@
   --border-subtle: rgba(0, 0, 0, 0.035);
   --border-focus: #c28422;
 
-  --card-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.05);
+  --card-shadow: 0 14px 36px -10px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
 
   --text-main: #18191d;
   --text-muted: #6a6e7c;
@@ -82,7 +84,7 @@
 
   --primary: #c28422;
   --primary-hover: #a36d17;
-  --primary-glow: rgba(194, 132, 34, 0.16);
+  --primary-glow: rgba(194, 132, 34, 0.2);
   --primary-soft: #fcf6eb;
   --primary-border: #f5dfb8;
   --primary-foreground: #ffffff;
@@ -97,12 +99,13 @@
 
   --chart-trace: #c28422;
   --chart-glow: rgba(194, 132, 34, 0.25);
-  --chart-area-top: rgba(194, 132, 34, 0.15);
+  --chart-area-top: rgba(194, 132, 34, 0.16);
   --chart-area-bottom: rgba(194, 132, 34, 0.0);
   --chart-reticle: rgba(0, 0, 0, 0.06);
   --chart-label: #8c92a2;
 
-  --ambient-1: rgba(194, 132, 34, 0.05);
+  --particle-rgb: 194, 132, 34;
+  --ambient-1: rgba(194, 132, 34, 0.06);
   --ambient-2: rgba(245, 158, 11, 0.03);
 }
 
@@ -117,7 +120,7 @@
 
   --primary: #e78a53;
   --primary-hover: #f59e6b;
-  --primary-glow: rgba(231, 138, 83, 0.22);
+  --primary-glow: rgba(231, 138, 83, 0.25);
   --primary-soft: rgba(231, 138, 83, 0.1);
   --primary-border: rgba(231, 138, 83, 0.32);
   --primary-foreground: #09090b;
@@ -125,7 +128,7 @@
   --chart-trace: #e78a53;
   --chart-glow: rgba(231, 138, 83, 0.35);
   --chart-area-top: rgba(231, 138, 83, 0.2);
-  --ambient-1: rgba(231, 138, 83, 0.07);
+  --particle-rgb: 231, 138, 83;
 }
 
 /* Theme: Botanical Sage */
@@ -139,7 +142,7 @@
 
   --primary: #10b981;
   --primary-hover: #059669;
-  --primary-glow: rgba(16, 185, 129, 0.22);
+  --primary-glow: rgba(16, 185, 129, 0.25);
   --primary-soft: rgba(16, 185, 129, 0.1);
   --primary-border: rgba(16, 185, 129, 0.32);
   --primary-foreground: #031008;
@@ -147,7 +150,7 @@
   --chart-trace: #10b981;
   --chart-glow: rgba(16, 185, 129, 0.35);
   --chart-area-top: rgba(16, 185, 129, 0.2);
-  --ambient-1: rgba(16, 185, 129, 0.07);
+  --particle-rgb: 16, 185, 129;
 }
 
 /* Theme: Cyber Slate */
@@ -161,7 +164,7 @@
 
   --primary: #38bdf8;
   --primary-hover: #0284c7;
-  --primary-glow: rgba(56, 189, 248, 0.22);
+  --primary-glow: rgba(56, 189, 248, 0.25);
   --primary-soft: rgba(56, 189, 248, 0.1);
   --primary-border: rgba(56, 189, 248, 0.32);
   --primary-foreground: #040e1b;
@@ -169,11 +172,11 @@
   --chart-trace: #38bdf8;
   --chart-glow: rgba(56, 189, 248, 0.35);
   --chart-area-top: rgba(56, 189, 248, 0.2);
-  --ambient-1: rgba(56, 189, 248, 0.07);
+  --particle-rgb: 56, 189, 248;
 }
 
 /* --------------------------------------------------------------------------
-   Resets & Typography
+   Resets & Canvas Architecture
    -------------------------------------------------------------------------- */
 * {
   box-sizing: border-box;
@@ -190,24 +193,25 @@ body {
   color: var(--text-main);
   line-height: 1.5;
   min-height: 100dvh;
-  padding: 24px 24px 60px;
+  padding: 22px 22px 60px;
   position: relative;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-body::before {
-  content: "";
+/* Ambient Canvas Particle Layer */
+.ambient-canvas {
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
+  opacity: 0.65;
 }
 
-[data-mode="light"] body::before {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+[data-mode="light"] .ambient-canvas {
+  opacity: 0.35;
 }
 
 .serif-display {
@@ -233,9 +237,9 @@ body::before {
 .ambient-glow {
   position: fixed;
   border-radius: 50%;
-  filter: blur(130px);
+  filter: blur(140px);
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
   opacity: 0.55;
 }
 
@@ -256,18 +260,20 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   Minimal Floating Top Bar
+   Header
    -------------------------------------------------------------------------- */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: var(--bg-panel);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding: 10px 20px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-hairline);
   box-shadow: var(--card-shadow);
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   flex-wrap: wrap;
   gap: 14px;
 }
@@ -288,6 +294,7 @@ body::before {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--primary-border);
+  box-shadow: 0 0 16px -2px var(--primary-glow);
 }
 
 .brand-row {
@@ -375,10 +382,10 @@ h1 {
   display: inline-block;
 }
 
-.dot-amber { background: #f3ba63; }
-.dot-dark { background: #e78a53; }
-.dot-forest { background: #10b981; }
-.dot-tech { background: #38bdf8; }
+.dot-amber { background: #f3ba63; box-shadow: 0 0 5px rgba(243, 186, 99, 0.6); }
+.dot-dark { background: #e78a53; box-shadow: 0 0 5px rgba(231, 138, 83, 0.6); }
+.dot-forest { background: #10b981; box-shadow: 0 0 5px rgba(16, 185, 129, 0.6); }
+.dot-tech { background: #38bdf8; box-shadow: 0 0 5px rgba(56, 189, 248, 0.6); }
 
 .mode-toggle-btn {
   display: flex;
@@ -445,7 +452,7 @@ h1 {
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 22px;
   align-items: start;
 }
 
@@ -458,7 +465,7 @@ h1 {
 .card-panel {
   background: var(--bg-panel);
   border-radius: var(--radius-panel);
-  padding: 26px 28px;
+  padding: 24px 26px;
   border: 1px solid var(--border-hairline);
   box-shadow: var(--card-shadow);
   position: relative;
@@ -491,10 +498,9 @@ h2 {
 .section-desc {
   font-size: 0.78rem;
   color: var(--text-muted);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
-/* Mode Switcher Pills */
 .input-mode-toggle {
   display: flex;
   background: var(--bg-subtle);
@@ -528,14 +534,14 @@ h2 {
 }
 
 /* --------------------------------------------------------------------------
-   Sleek Channel Selector (Replaces messy 10-button grid)
+   Channel Selector Bar
    -------------------------------------------------------------------------- */
 .channel-selector-bar {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
   background: var(--bg-subtle);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
@@ -549,7 +555,7 @@ h2 {
 }
 
 .channel-picker-label {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -558,12 +564,12 @@ h2 {
 
 .preset-select {
   font-family: inherit;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   background: var(--bg-input);
   color: var(--text-main);
   border: 1px solid var(--border-hairline);
-  padding: 7px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
   outline: none;
   cursor: pointer;
@@ -578,8 +584,8 @@ h2 {
   background: var(--bg-input);
   border: 1px solid var(--border-hairline);
   color: var(--text-muted);
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   display: flex;
   align-items: center;
@@ -592,7 +598,6 @@ h2 {
   border-color: var(--border-focus);
 }
 
-/* 1-Line Scenario Overview Chip */
 .scenario-summary-strip {
   display: flex;
   align-items: center;
@@ -609,7 +614,7 @@ h2 {
 }
 
 .scenario-desc-inline {
-  font-size: 0.72rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   flex: 1;
 }
@@ -620,13 +625,76 @@ h2 {
 }
 
 .chip-mini {
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   font-family: var(--font-mono);
   background: var(--bg-canvas);
   border: 1px solid var(--border-hairline);
-  padding: 2px 7px;
+  padding: 2px 6px;
   border-radius: var(--radius-pill);
   color: var(--primary);
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Season Playback Simulator Bar
+   -------------------------------------------------------------------------- */
+.season-playback-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 16px;
+}
+
+.btn-playback {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-playback:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.scrubber-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border-hairline);
+  border-radius: var(--radius-pill);
+  outline: none;
+  cursor: pointer;
+}
+
+.scrubber-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 6px var(--primary-glow);
+  cursor: pointer;
+}
+
+.scrubber-label {
+  font-size: 0.66rem;
+  color: var(--text-dim);
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------
@@ -635,18 +703,18 @@ h2 {
 .form-row-calm {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 label {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
@@ -660,8 +728,8 @@ label {
   border: 1px solid var(--border-hairline);
   color: var(--text-main);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  font-size: 0.8rem;
+  padding: 7px 11px;
+  font-size: 0.78rem;
   outline: none;
   transition: all 0.2s var(--ease-spring);
 }
@@ -677,7 +745,7 @@ label {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   background: var(--bg-input);
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   overflow: hidden;
 }
 
@@ -685,7 +753,7 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 13px;
+  padding: 8px 12px;
   background: var(--bg-subtle);
   cursor: pointer;
   user-select: none;
@@ -694,20 +762,30 @@ label {
 .drawer-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.72rem;
+  gap: 7px;
+  font-size: 0.7rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
+.badge-count {
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-canvas);
+  color: var(--text-muted);
+  border: 1px solid var(--border-hairline);
+}
+
 .drawer-toggle-text {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--primary);
   font-weight: 600;
 }
 
 .drawer-content {
-  padding: 12px;
+  padding: 10px 12px;
   border-top: 1px solid var(--border-hairline);
 }
 
@@ -715,20 +793,20 @@ label {
   width: 100%;
   resize: vertical;
   line-height: 1.45;
-  font-size: 0.74rem;
+  font-size: 0.73rem;
 }
 
 .drawer-help {
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   color: var(--text-dim);
-  margin-top: 6px;
+  margin-top: 5px;
   line-height: 1.35;
 }
 
 /* Action Button Row */
 .form-actions {
   display: flex;
-  gap: 10px;
+  gap: 9px;
   align-items: center;
 }
 
@@ -737,7 +815,7 @@ label {
   align-items: center;
   justify-content: center;
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   border-radius: var(--radius-pill);
   cursor: pointer;
@@ -748,8 +826,8 @@ label {
 .btn-primary {
   background: var(--primary);
   color: var(--primary-foreground);
-  padding: 10px 18px;
-  gap: 10px;
+  padding: 9px 18px;
+  gap: 9px;
   box-shadow: 0 4px 16px -2px var(--primary-glow);
 }
 
@@ -763,7 +841,7 @@ label {
 }
 
 .kbd-badge {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-family: var(--font-mono);
   background: rgba(0, 0, 0, 0.15);
   padding: 1px 5px;
@@ -778,8 +856,8 @@ label {
   background: var(--bg-subtle);
   border: 1px solid var(--border-hairline);
   color: var(--text-main);
-  padding: 9px 14px;
-  gap: 6px;
+  padding: 8px 13px;
+  gap: 5px;
 }
 
 .btn-secondary:hover {
@@ -826,13 +904,13 @@ label {
   border: 1px solid var(--success-border);
 }
 
-/* Oscilloscope Reticle */
+/* Oscilloscope Reticle with Laser Scanline */
 .trend-visualizer-card {
   background: var(--bg-subtle);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  margin-bottom: 18px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
   position: relative;
   overflow: hidden;
 }
@@ -841,7 +919,7 @@ label {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .trend-title-area {
@@ -857,7 +935,7 @@ label {
 }
 
 .trend-title {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -865,7 +943,7 @@ label {
 }
 
 .trend-meta {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--primary);
   font-weight: 600;
 }
@@ -875,6 +953,28 @@ label {
   height: 85px;
   position: relative;
   overflow: hidden;
+}
+
+/* Laser sweep effect */
+.laser-scanline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, transparent, var(--primary), transparent);
+  box-shadow: 0 0 8px var(--primary);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+}
+
+.laser-scanline.scanning {
+  animation: laser-sweep 0.75s var(--ease-fluid) forwards;
+}
+
+@keyframes laser-sweep {
+  0% { left: 0%; opacity: 0.9; }
+  100% { left: 100%; opacity: 0; }
 }
 
 .sparkline-svg {
@@ -905,16 +1005,16 @@ label {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 44px 24px;
+  padding: 40px 20px;
   border: 1px dashed var(--border-hairline);
   border-radius: var(--radius-sm);
   background: var(--bg-subtle);
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .placeholder-icon-wrap {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: var(--bg-input);
   border: 1px solid var(--border-hairline);
@@ -922,17 +1022,17 @@ label {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .placeholder-state h3 {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   color: var(--text-main);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .placeholder-state p {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: var(--text-muted);
   max-width: 320px;
   line-height: 1.45;
@@ -944,7 +1044,7 @@ label {
   border: 1px solid var(--danger-border);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .error-header {
@@ -965,7 +1065,7 @@ label {
 }
 
 .error-banner p {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: var(--text-main);
   line-height: 1.4;
   margin-bottom: 6px;
@@ -984,15 +1084,15 @@ label {
    Harvest Chronometer Result Display
    -------------------------------------------------------------------------- */
 .prediction-display {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .metric-highlight {
   background: var(--bg-subtle);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
   position: relative;
 }
 
@@ -1004,7 +1104,7 @@ label {
 }
 
 .metric-label {
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1024,24 +1124,24 @@ label {
 }
 
 .metric-range {
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   letter-spacing: -0.02em;
   color: var(--text-main);
   line-height: 1.1;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .metric-sub {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .metric-sub strong {
   color: var(--text-main);
 }
 
-/* Continuous Flow Timeline */
+/* Flow Timeline with Hexagonal Comb Saturation */
 .flow-timeline {
   background: var(--bg-input);
   border: 1px solid var(--border-hairline);
@@ -1049,13 +1149,34 @@ label {
   padding: 10px 12px;
 }
 
-.timeline-labels {
+.timeline-header-flex {
   display: flex;
   justify-content: space-between;
-  font-size: 0.66rem;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.timeline-labels {
+  display: flex;
+  gap: 12px;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-bottom: 6px;
+}
+
+.comb-saturation-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.64rem;
+  font-family: var(--font-mono);
+  color: var(--primary);
+}
+
+.comb-hex-icon {
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
 }
 
 .timeline-bar {
@@ -1069,16 +1190,16 @@ label {
   height: 100%;
   background: linear-gradient(90deg, var(--primary) 0%, #10b981 100%);
   border-radius: var(--radius-pill);
-  transition: width 0.8s var(--ease-spring);
+  transition: width 0.6s var(--ease-spring);
 }
 
-/* Metric Strip (Clean 4-Item Row, No Bulky Boxes) */
+/* Metric Strip (Clean 4-Item Row) */
 .metric-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px 14px;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
   background: var(--bg-subtle);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
@@ -1091,7 +1212,7 @@ label {
 }
 
 .metric-item-label {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1099,16 +1220,16 @@ label {
 }
 
 .metric-item-val {
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text-main);
 }
 
 .badge-confidence {
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   font-family: var(--font-mono);
   font-weight: 600;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: var(--radius-pill);
   width: fit-content;
 }
@@ -1116,26 +1237,26 @@ label {
 .badge-high { background: var(--success-soft); color: var(--success); border: 1px solid var(--success-border); }
 .badge-low { background: rgba(243, 186, 99, 0.15); color: var(--primary); border: 1px solid var(--primary-border); }
 
-/* Advisory Card */
+/* Advisory Notice */
 .advisory-box {
   background: var(--bg-subtle);
   border-left: 2px solid var(--primary);
   border-radius: 0 8px 8px 0;
-  padding: 10px 14px;
-  margin-bottom: 16px;
+  padding: 10px 13px;
+  margin-bottom: 14px;
 }
 
 .advisory-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: var(--primary);
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .advisory-box p {
-  font-size: 0.74rem;
+  font-size: 0.73rem;
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -1161,7 +1282,7 @@ label {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.67rem;
+  font-size: 0.66rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1182,7 +1303,7 @@ label {
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-xs);
   padding: 2px 7px;
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -1204,7 +1325,7 @@ label {
 
 /* Footer */
 .footer {
-  margin-top: 36px;
+  margin-top: 32px;
   padding-top: 16px;
   border-top: 1px solid var(--border-subtle);
 }

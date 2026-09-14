@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
+  <!-- Ambient Nectar & Pollen Canvas Particle Field -->
+  <canvas id="ambient-canvas" class="ambient-canvas"></canvas>
+
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
@@ -98,14 +101,14 @@
             </button>
           </div>
         </div>
-        <p class="section-desc">Select an apiary diagnostic channel or inject custom sensor telemetry.</p>
+        <p class="section-desc">Select an apiary diagnostic channel or step through the bloom lifecycle.</p>
 
-        <!-- Streamlined Channel Selector Bar (No messy 10-button grid) -->
+        <!-- Streamlined Channel Selector Bar -->
         <div class="channel-selector-bar">
           <div class="channel-selector-top">
             <span class="channel-picker-label">Channel</span>
             <select id="preset-select" class="preset-select" onchange="onPresetSelectChange(this.value)">
-              <!-- Options populated by app.js -->
+              <!-- Populated by JS -->
             </select>
             <button type="button" class="channel-nav-btn" onclick="cyclePreset(-1)" title="Previous Channel">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
@@ -115,7 +118,6 @@
             </button>
           </div>
 
-          <!-- 1-Line Overview Strip -->
           <div class="scenario-summary-strip">
             <span class="status-pip"></span>
             <span id="preset-description" class="scenario-desc-inline">Loading scenario...</span>
@@ -123,7 +125,17 @@
           </div>
         </div>
 
-        <!-- Hidden container for compatibility with category filtering in app.js -->
+        <!-- Interactive Season Timeline & Scrubbing Simulator -->
+        <div class="season-playback-bar">
+          <button type="button" id="btn-play-season" class="btn-playback" onclick="toggleSeasonPlayback()">
+            <span id="playback-icon">&#9654;</span>
+            <span id="playback-text">Play Season</span>
+          </button>
+          <input type="range" id="season-scrubber" class="scrubber-slider" min="6" max="15" value="15" oninput="onScrubSeason(this.value)" />
+          <span id="scrub-label" class="scrubber-label mono-text">Day 15 / 15</span>
+        </div>
+
+        <!-- Hidden compatibility hooks -->
         <div id="preset-buttons-container" style="display: none;"></div>
         <div id="preset-info-card" style="display: none;">
           <span id="preset-badge"></span>
@@ -147,16 +159,16 @@
             </div>
           </div>
 
-          <!-- Telemetry Mode: Collapsible Drawer (Avoids 200px of textarea clutter) -->
+          <!-- Telemetry Mode: Collapsible Drawer -->
           <div id="telemetry-input-container">
-            <details class="telemetry-drawer" open>
+            <details class="telemetry-drawer">
               <summary class="telemetry-drawer-summary">
                 <div class="drawer-title-row">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                   <span>Daily Telemetry Stream</span>
                   <span id="record-count" class="badge-count mono-text">0 days</span>
                 </div>
-                <span class="drawer-toggle-text">Edit Raw JSON &blacktriangledown;</span>
+                <span class="drawer-toggle-text">View / Edit JSON &blacktriangledown;</span>
               </summary>
               <div class="drawer-content">
                 <textarea id="telemetry-json" class="textarea mono-text" rows="7" spellcheck="false" required></textarea>
@@ -210,8 +222,9 @@
         </div>
         <p class="section-desc">Real-time biological inference with error margins and velocity.</p>
 
-        <!-- Biomass Velocity Oscilloscope (Spacious Reticle) -->
+        <!-- Biomass Velocity Oscilloscope (With Laser Sweep) -->
         <div class="trend-visualizer-card" id="trend-visualizer-card" style="display: none;">
+          <div class="laser-scanline" id="laser-scanline"></div>
           <div class="trend-header">
             <div class="trend-title-area">
               <svg class="oscilloscope-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -232,7 +245,7 @@
             </svg>
           </div>
           <h3 class="serif-display">Awaiting Telemetry Stream</h3>
-          <p>Select a diagnostic channel on the left and run forecast to calculate the recommended harvest window.</p>
+          <p>Select a diagnostic channel or press Play Season to simulate flow progression and forecast the harvest date.</p>
         </div>
 
         <!-- Error Alert Banner -->
@@ -258,12 +271,20 @@
             <div class="metric-range mono-text serif-display" id="res-range">--</div>
             <div class="metric-sub">Expected Point Estimate: <strong class="mono-text" id="res-days">--</strong> remaining</div>
             
-            <!-- Flow Timeline Visualizer -->
+            <!-- Flow Timeline & Comb Saturation Visualizer -->
             <div class="flow-timeline">
-              <div class="timeline-labels">
-                <span>Flow Inception</span>
-                <span id="timeline-current-label" class="mono-text">Day 14</span>
-                <span id="timeline-end-label" class="mono-text">Est. Total: 23d</span>
+              <div class="timeline-header-flex">
+                <div class="timeline-labels">
+                  <span>Flow Inception</span>
+                  <span id="timeline-current-label" class="mono-text">Day 14</span>
+                  <span id="timeline-end-label" class="mono-text">Est. Total: 23d</span>
+                </div>
+                <div class="comb-saturation-badge">
+                  <svg class="comb-hex-icon" viewBox="0 0 24 24">
+                    <path d="M12 2l8.5 5v10L12 22l-8.5-5V7L12 2z"/>
+                  </svg>
+                  <span id="comb-percent" class="mono-text">74% Saturation</span>
+                </div>
               </div>
               <div class="timeline-bar">
                 <div class="timeline-progress" id="timeline-progress" style="width: 60%;"></div>

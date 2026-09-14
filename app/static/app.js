@@ -1,6 +1,6 @@
 /**
- * HoneyChain Yield ML Microservice - Museum-Grade Controller
- * Clean, uncluttered event loop with Channel Picker and Reticle Oscilloscope
+ * HoneyChain Yield ML Microservice - Immersive Apiary Laboratory Engine
+ * Features: Ambient Pollen Canvas, Season Simulator, Rolling Odometer, Laser Reticle
  */
 
 let sampleData = {};
@@ -9,10 +9,16 @@ let currentPresetKey = "early_strong_flow";
 let currentInputMode = "telemetry";
 let currentPointsData = [];
 
+// Simulation state
+let isPlayingSeason = false;
+let seasonPlayTimer = null;
+let fullCurrentHistory = [];
+
 document.addEventListener("DOMContentLoaded", () => {
   initVisualMode();
   initTheme();
   initUtcClock();
+  initAmbientCanvas();
   checkHealth();
   fetchSampleData();
 
@@ -33,6 +39,84 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupChartHover();
 });
+
+// ==========================================
+// Ambient Pollen & Nectar Particle Canvas
+// ==========================================
+function initAmbientCanvas() {
+  const canvas = document.getElementById("ambient-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  let width = (canvas.width = window.innerWidth);
+  let height = (canvas.height = window.innerHeight);
+
+  window.addEventListener("resize", () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  });
+
+  const mouse = { x: -1000, y: -1000 };
+  window.addEventListener("mousemove", (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  const particles = [];
+  const count = 48;
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.45,
+      vy: -0.2 - Math.random() * 0.45,
+      radius: Math.random() * 2.2 + 0.8,
+      alpha: Math.random() * 0.6 + 0.2,
+      pulse: Math.random() * Math.PI
+    });
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, width, height);
+
+    const rootStyles = getComputedStyle(document.documentElement);
+    const rgb = rootStyles.getPropertyValue("--particle-rgb").trim() || "243, 186, 99";
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.pulse += 0.02;
+
+      // Soft boundary wrap
+      if (p.x < -10) p.x = width + 10;
+      if (p.x > width + 10) p.x = -10;
+      if (p.y < -10) p.y = height + 10;
+
+      // Gentle mouse repulsion
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 120) {
+        const force = (120 - dist) / 120;
+        p.x += (dx / dist) * force * 1.8;
+        p.y += (dy / dist) * force * 1.8;
+      }
+
+      const pulseAlpha = p.alpha * (0.75 + Math.sin(p.pulse) * 0.25);
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${rgb}, ${pulseAlpha})`;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(render);
+  }
+
+  render();
+}
 
 // Live UTC Clock
 function initUtcClock() {
@@ -165,10 +249,12 @@ function populatePresetDropdown() {
 }
 
 function onPresetSelectChange(key) {
+  stopSeasonPlayback();
   loadPreset(key);
 }
 
 function cyclePreset(direction) {
+  stopSeasonPlayback();
   if (!presetKeysOrder || presetKeysOrder.length === 0) return;
   const currIdx = presetKeysOrder.indexOf(currentPresetKey);
   let nextIdx = currIdx + direction;
@@ -181,6 +267,7 @@ function loadPreset(key) {
   if (!sampleData || !sampleData[key]) return;
   currentPresetKey = key;
   const scenario = sampleData[key];
+  fullCurrentHistory = scenario.history ? JSON.parse(JSON.stringify(scenario.history)) : [];
 
   const select = document.getElementById("preset-select");
   if (select) select.value = key;
@@ -192,6 +279,16 @@ function loadPreset(key) {
   const jsonStr = JSON.stringify(scenario.history, null, 2);
   document.getElementById("telemetry-json").value = jsonStr;
   updateRecordCount();
+
+  // Reset scrubber slider
+  const scrubber = document.getElementById("season-scrubber");
+  const scrubLabel = document.getElementById("scrub-label");
+  if (scrubber && fullCurrentHistory.length > 0) {
+    scrubber.min = Math.min(6, fullCurrentHistory.length);
+    scrubber.max = fullCurrentHistory.length;
+    scrubber.value = fullCurrentHistory.length;
+    if (scrubLabel) scrubLabel.textContent = `Day ${fullCurrentHistory.length} / ${fullCurrentHistory.length}`;
+  }
 
   // Update summary strip
   const descEl = document.getElementById("preset-description");
@@ -214,13 +311,108 @@ function loadPreset(key) {
     chipsEl.innerHTML = chips;
   }
 
+  updateCombGauge(fullCurrentHistory);
   renderTrendSparkline(scenario.history);
 }
 
 function resetToCurrentPreset() {
+  stopSeasonPlayback();
   if (currentPresetKey && sampleData[currentPresetKey]) {
     loadPreset(currentPresetKey);
     showToast("Reset to channel default values");
+  }
+}
+
+// ==========================================
+// Interactive Season Timeline Simulator
+// ==========================================
+function toggleSeasonPlayback() {
+  if (isPlayingSeason) {
+    stopSeasonPlayback();
+  } else {
+    startSeasonPlayback();
+  }
+}
+
+function startSeasonPlayback() {
+  if (!fullCurrentHistory || fullCurrentHistory.length < 6) {
+    showToast("Requires at least 6 days of telemetry to play", true);
+    return;
+  }
+
+  isPlayingSeason = true;
+  const btnIcon = document.getElementById("playback-icon");
+  const btnText = document.getElementById("playback-text");
+  if (btnIcon) btnIcon.innerHTML = "&#10074;&#10074;";
+  if (btnText) btnText.textContent = "Pause";
+
+  const scrubber = document.getElementById("season-scrubber");
+  let currentStep = parseInt(scrubber.value, 10);
+  if (currentStep >= fullCurrentHistory.length) {
+    currentStep = 6;
+  }
+
+  seasonPlayTimer = setInterval(() => {
+    if (currentStep > fullCurrentHistory.length) {
+      stopSeasonPlayback();
+      showToast("Season playback complete");
+      return;
+    }
+
+    scrubber.value = currentStep;
+    onScrubSeason(currentStep, false);
+    currentStep++;
+  }, 450);
+}
+
+function stopSeasonPlayback() {
+  isPlayingSeason = false;
+  if (seasonPlayTimer) {
+    clearInterval(seasonPlayTimer);
+    seasonPlayTimer = null;
+  }
+  const btnIcon = document.getElementById("playback-icon");
+  const btnText = document.getElementById("playback-text");
+  if (btnIcon) btnIcon.innerHTML = "&#9654;";
+  if (btnText) btnText.textContent = "Play Season";
+}
+
+function onScrubSeason(val, autoTriggerPredict = true) {
+  const dayCount = parseInt(val, 10);
+  const scrubLabel = document.getElementById("scrub-label");
+  if (scrubLabel && fullCurrentHistory.length > 0) {
+    scrubLabel.textContent = `Day ${dayCount} / ${fullCurrentHistory.length}`;
+  }
+
+  const slicedHistory = fullCurrentHistory.slice(0, dayCount);
+  document.getElementById("telemetry-json").value = JSON.stringify(slicedHistory, null, 2);
+  updateRecordCount();
+  updateCombGauge(slicedHistory);
+  renderTrendSparkline(slicedHistory);
+
+  if (autoTriggerPredict && dayCount >= 6) {
+    const form = document.getElementById("predict-form");
+    if (form) {
+      handlePredict(new Event("submit", { cancelable: true }), false);
+    }
+  }
+}
+
+function updateCombGauge(history) {
+  const combEl = document.getElementById("comb-percent");
+  if (!combEl || !history || history.length === 0) return;
+
+  const validWeights = history.map(h => h.weight).filter(w => w != null && !isNaN(w));
+  if (validWeights.length >= 2) {
+    const startW = validWeights[0];
+    const endW = validWeights[validWeights.length - 1];
+    const gain = Math.max(0, endW - startW);
+    // Standard 10-frame honey super capacity is approx 20-25 kg
+    const capacity = 22.0;
+    const saturation = Math.min(100, Math.round((gain / capacity) * 100));
+    combEl.textContent = `${saturation}% Saturation`;
+  } else {
+    combEl.textContent = `50% Saturation`;
   }
 }
 
@@ -379,6 +571,7 @@ function setupChartHover() {
 }
 
 function switchInputMode(mode) {
+  stopSeasonPlayback();
   currentInputMode = mode;
   const tabTel = document.getElementById("tab-telemetry");
   const tabFeat = document.getElementById("tab-features");
@@ -482,7 +675,27 @@ function formatActiveJSON() {
   }
 }
 
-async function handlePredict(event) {
+// Rolling number animation
+function animateValue(element, start, end, duration, suffix = "") {
+  if (!element) return;
+  const startTime = performance.now();
+  const isFloat = end % 1 !== 0;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1.0);
+    const easeProgress = 1 - Math.pow(1 - progress, 3);
+    const current = start + (end - start) * easeProgress;
+    element.textContent = `${isFloat ? current.toFixed(1) : Math.round(current)}${suffix}`;
+    if (progress < 1.0) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
+async function handlePredict(event, showToasts = true) {
   if (event && event.preventDefault) event.preventDefault();
 
   const submitBtn = document.getElementById("submit-btn");
@@ -493,6 +706,7 @@ async function handlePredict(event) {
   const successCard = document.getElementById("result-success");
   const rawBox = document.getElementById("raw-json");
   const statusPill = document.getElementById("res-status-pill");
+  const laser = document.getElementById("laser-scanline");
 
   const hiveId = document.getElementById("hive-id").value.trim();
   const margin = parseInt(document.getElementById("margin").value, 10);
@@ -539,6 +753,13 @@ async function handlePredict(event) {
     };
   }
 
+  // Trigger laser scan
+  if (laser) {
+    laser.classList.remove("scanning");
+    void laser.offsetWidth; // Reflow
+    laser.classList.add("scanning");
+  }
+
   submitBtn.disabled = true;
   btnText.textContent = "Forecasting...";
   btnSpinner.style.display = "inline-block";
@@ -565,8 +786,10 @@ async function handlePredict(event) {
 
       const pred = result.prediction;
       document.getElementById("res-range").textContent = pred.harvestWindowRange;
-      document.getElementById("res-days").textContent = `${pred.expectedHarvestWindowDays} days`;
       
+      const daysEl = document.getElementById("res-days");
+      animateValue(daysEl, 0, pred.expectedHarvestWindowDays, 500, " days");
+
       const confEl = document.getElementById("res-confidence");
       confEl.textContent = result.confidence || "CALIBRATED";
       confEl.className = `metric-item-val badge-confidence ${result.confidence === "HIGH" ? "badge-high" : "badge-low"}`;
@@ -585,7 +808,9 @@ async function handlePredict(event) {
       document.getElementById("timeline-end-label").textContent = `Est. Total: ${totalDays}d`;
       document.getElementById("timeline-progress").style.width = `${progressPercent}%`;
 
-      showToast(`Forecast generated in ${latency}ms`);
+      if (showToasts) {
+        showToast(`Forecast computed in ${latency}ms`);
+      }
     } else {
       let advice = "";
       if (result.status === "INSUFFICIENT_HISTORY") {
