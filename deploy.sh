@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "==> Pulling latest changes from git origin main..."
+echo "==> Pulling and synchronizing latest changes from git origin main..."
 cd /opt/services/honeychain-yield-ml
 git fetch origin main
-git checkout main
-git pull origin main
+git checkout -B main origin/main
+git reset --hard origin/main
 
 echo "==> Installing Python dependencies..."
 ./venv/bin/pip install -r requirements.txt

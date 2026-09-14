@@ -19,4 +19,8 @@ jobs:
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            cd /opt/services/honeychain-yield-ml
+            git fetch origin main
+            git checkout -B main origin/main
+            git reset --hard origin/main
             /opt/services/honeychain-yield-ml/deploy.sh
